@@ -25,6 +25,7 @@ def get_skey(storage, login, password):
     login_data = '_'.join([login, password])
     login_hash = md5(login_data.encode()).hexdigest()
     login_url = 'http://{0}/api/login/{1}'.format(storage, login_hash)
+    # Trying to make HTTP request
     try:
         query_skey = request.urlopen(login_url)
         resp_skey = query_skey.read()
