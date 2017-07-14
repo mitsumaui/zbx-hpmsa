@@ -18,6 +18,10 @@ Low Level Discovery:
 Component status:
  - [x] physical disks 
  - [x] virtual disks
+ 
+ **TODO**
+ - Enclosures monitoring
+ - Controllers monitoring
 
 **Usage**
   - LLD:
