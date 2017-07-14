@@ -1,6 +1,8 @@
 # zbx-hpmsa
 Zabbix module to monitor HP MSA storages
+
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api
+
 Also you can contact with me in vk.com: https://vk.com/asand3r
 
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
