@@ -36,7 +36,7 @@ Component status:
     
     OK
   ```
-**Zabbix template**
+**Zabbix template**  
 Also I've attached here preconfigured Zabbix Template, so you can use it in your environment. It's using Low Level Discovery functionality and {HOST.CONN} macro to determine http connection URL, so make sure that it points to right DNS name or IP.
 
 Have fun and rate it on share.zabbix.com if you like it. =)
