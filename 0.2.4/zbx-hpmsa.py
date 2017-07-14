@@ -33,7 +33,6 @@ def get_skey(storage, login, password):
         exc_value = exc_info()[1]
         if exc_value.reason.errno == 11001:
             raise SystemExit('Cannot open URL: {0}'.format(login_url))
-
     session_key = eTree.fromstring(resp_skey.decode())[0][2].text
     if len(session_key) != 0:
         return session_key
