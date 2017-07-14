@@ -28,15 +28,16 @@ def get_skey(storage, login, password):
     try:
         query_skey = request.urlopen(login_url)
         resp_skey = query_skey.read()
-        session_key = eTree.fromstring(resp_skey.decode())[0][2].text
-        if len(session_key) != 0:
-            return session_key
-        else:
-            raise SystemExit('ERROR: Got zero-length value for session key')
     except URLError:
         exc_value = exc_info()[1]
         if exc_value.reason.errno == 11001:
             raise SystemExit('Cannot open URL: {0}'.format(login_url))
+
+    session_key = eTree.fromstring(resp_skey.decode())[0][2].text
+    if len(session_key) != 0:
+        return session_key
+    else:
+        raise SystemExit('ERROR: Got zero-length value for session key')
 
 
 def get_value(storage, sessionkey, component, item):
