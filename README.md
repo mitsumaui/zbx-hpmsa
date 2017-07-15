@@ -37,7 +37,7 @@ Component status:
     OK
   ```
 **Zabbix template**  
-Also I've attached here preconfigured Zabbix Template, so you can use it in your environment. It's using Low Level Discovery functionality and {HOST.CONN} macro to determine http connection URL, so make sure that it points to right DNS name or IP.
+In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage has default user with default password - 'monitor'/'!monitor', but if it isn't true - correct it with '-u' and '-p' options (for example "./zbx-hpmsa['-d', '-m', '192.168.1.1', '-c', 'vdisks', '-u', 'FOO', '-p', 'BAR']").
 
 Have fun and rate it on share.zabbix.com if you like it. =)
 
