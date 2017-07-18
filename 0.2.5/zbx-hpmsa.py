@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import xml.etree.ElementTree as eTree
 from sys import exc_info
@@ -82,31 +82,36 @@ def get_value(storage, sessionkey, component, item):
             raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
     response = query.read()
     response_xml = eTree.fromstring(response.decode())
-    # Return vdisk status
+
+    # Returns statuses
+    # vsisks
     if component == 'vdisks':
         stat_arr = response_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
-    # Return disk status
+    # disks
     elif component == 'disks':
         stat_arr = response_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
-    # Return controller status
+    # controllers
     elif component == 'controllers':
-        status_dict = {}
+        # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
+        health_dict = {}
         for ctrl in response_xml.findall("./OBJECT[@name='controllers']"):
+            # If length of item eq 1 symbols - it should be ID
             if len(item) == 1:
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
+            # serial number, I think. Maybe I should add possibility to search controller by IP?..
             else:
                 ctrl_id = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
             ctrl_health = ctrl.findall("./PROPERTY[@name='health']")[0].text
-            status_dict[ctrl_id] = ctrl_health
-        if item in status_dict:
-            return status_dict[item]
+            health_dict[ctrl_id] = ctrl_health
+        # If given item in our dict - return status
+        if item in health_dict:
+            return health_dict[item]
         else:
             return 'ERROR: No such controller ({0})'.format(item)
-
     # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
     else:
         return 'Wrong component: {cmp}'.format(cmp=component)
@@ -140,27 +145,27 @@ def make_discovery(storage, sessionkey, component):
         else:
             raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
     # Eject XML from response
-    response_xml = query.read()
-    if len(response_xml) != 0:
-        discovery_xml = eTree.fromstring(response_xml.decode())
+    response = query.read()
+    if len(response) != 0:
+        xml_data = eTree.fromstring(response.decode())
     else:
         raise SystemExit('ERROR: ({func}) Got zero-length XML result'.format(func=cur_fname))
     if component is not None or len(component) != 0:
         all_components = []
         if component == 'vdisks':
-            for vdisk in discovery_xml.findall("./OBJECT[@name='virtual-disk']"):
+            for vdisk in xml_data.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component == 'disks':
-            for disk in discovery_xml.findall("./OBJECT[@name='drive']"):
+            for disk in xml_data.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
                 disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component == 'controllers':
-            for ctrl in discovery_xml.findall("./OBJECT[@name='controllers']"):
+            for ctrl in xml_data.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
                 ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
                 ctrl_ip = ctrl.findall("./PROPERTY[@name='ip-address']")[0].text
@@ -171,7 +176,7 @@ def make_discovery(storage, sessionkey, component):
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        SystemExit('ERROR: You should provide the storage component (vdisks, disks)')
+        SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
 
 
 if __name__ == '__main__':
