@@ -171,7 +171,7 @@ def make_discovery(storage, sessionkey, component):
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        SystemExit('ERROR: You should provide the storage component (vdisks, disks).')
+        SystemExit('ERROR: You should provide the storage component (vdisks, disks)')
 
 
 if __name__ == '__main__':
