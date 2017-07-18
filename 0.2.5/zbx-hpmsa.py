@@ -146,24 +146,20 @@ def make_discovery(storage, sessionkey, component):
     else:
         raise SystemExit('ERROR: ({func}) Got zero-length XML result'.format(func=cur_fname))
     if component is not None or len(component) != 0:
+        all_components = []
         if component == 'vdisks':
-            all_vdisks = []
             for vdisk in discovery_xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
-                all_vdisks.append(vdisk_dict)
-            to_json = {"data": all_vdisks}
+                all_components.append(vdisk_dict)
         elif component == 'disks':
-            all_disks = []
             for disk in discovery_xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
                 disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
-                all_disks.append(disk_dict)
-            to_json = {"data": all_disks}
+                all_components.append(disk_dict)
         elif component == 'controllers':
-            all_ctrls = []
             for ctrl in discovery_xml.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
                 ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
@@ -171,10 +167,8 @@ def make_discovery(storage, sessionkey, component):
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
-                all_ctrls.append(ctrl_dict)
-            to_json = {"data": all_ctrls}
-        else:
-            to_json = {}
+                all_components.append(ctrl_dict)
+        to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
         SystemExit('ERROR: You should provide the storage component (vdisks, disks).')
