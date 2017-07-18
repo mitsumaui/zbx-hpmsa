@@ -182,7 +182,7 @@ if __name__ == '__main__':
                         metavar='<IP> or <DNSNAME>')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
                         help='MSA component to monitor',
-                        metavar='<disks>,<vdisks>')
+                        metavar='<disks>,<vdisks>,<controllers>')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just show program version')
     args = parser.parse_args()
 
