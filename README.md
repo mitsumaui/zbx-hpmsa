@@ -7,21 +7,22 @@ Also you can contact me with vk.com: https://vk.com/asand3r
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
 Program wrote with Python 3.5, but works with Python 3.4 (I didn't check it with earlier versions, sorry) and doesn't depends of any external library.
 
-**Latest version:** 0.2.4.
+**Latest version:** 0.2.5.
 
 **Feautres**
 
 Low Level Discovery:
  - [x] physical disks 
  - [x] virtual disks
+ - [x] controllers
 
 Component status:
  - [x] physical disks 
  - [x] virtual disks
+ - [x] controllers
  
  **TODO**
  - Enclosures monitoring
- - Controllers monitoring
 
 **Usage**
   - LLD:
