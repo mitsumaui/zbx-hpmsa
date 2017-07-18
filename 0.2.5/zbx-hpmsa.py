@@ -175,7 +175,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID>,<VDISKNAME>')
+                        metavar='<DISKID|VDISKNAME|CONTROLLERID|CONTROLLERSN>')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
