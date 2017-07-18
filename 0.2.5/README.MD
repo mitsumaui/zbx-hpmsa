@@ -1,3 +1,4 @@
 What's new?
 
-Now we can work with exceptions in HTTP requests, so errors will be more intelligible.
+- Improved work with XML data, now we using XPath to access data.
+- Added discovery and status checking of controllers
