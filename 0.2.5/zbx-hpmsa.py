@@ -5,8 +5,8 @@ from sys import exc_info
 from hashlib import md5
 from urllib import request
 from urllib.error import URLError
-from re import sub
 from argparse import ArgumentParser
+from json import dumps
 
 
 def get_skey(storage, login, password):
@@ -67,6 +67,8 @@ def get_value(storage, sessionkey, component, item):
         get_url = 'http://{0}/api/show/{1}/{2}'.format(storage, component, item)
     elif component == 'controllers':
         get_url = 'http://{0}/api/show/{1}'.format(storage, component)
+    else:
+        return SystemExit('ERROR: Wrong component')
     req = request.Request(get_url)
     req.add_header('sessionKey', sessionkey)
     # Trying to make HTTP request
@@ -144,26 +146,36 @@ def make_discovery(storage, sessionkey, component):
     else:
         raise SystemExit('ERROR: ({func}) Got zero-length XML result'.format(func=cur_fname))
     if component is not None or len(component) != 0:
-        json_body = ''
         if component == 'vdisks':
+            all_vdisks = []
             for vdisk in discovery_xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
-                json_body += '{{"{{#VDISKNAME}}":"{name}"}},'.format(name=vdisk_name)
+                vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
+                all_vdisks.append(vdisk_dict)
+            to_json = {"data": all_vdisks}
         elif component == 'disks':
+            all_disks = []
             for disk in discovery_xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
                 disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
-                json_body += '{{"{{#DISKLOCATION}}":"{id}","{{#DISKSN}}":"{sn}"}},'.format(id=disk_loc, sn=disk_sn)
+                disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
+                             "{#DISKSN}": "{sn}".format(sn=disk_sn)}
+                all_disks.append(disk_dict)
+            to_json = {"data": all_disks}
         elif component == 'controllers':
+            all_ctrls = []
             for ctrl in discovery_xml.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
                 ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
                 ctrl_ip = ctrl.findall("./PROPERTY[@name='ip-address']")[0].text
-                json_body += '{{"{{#CTRLID}}":"{id}","{{#CTRLSN}}":"{sn}","{{#CTRLIP}}":"{ip}"}},'.format(
-                    id=ctrl_id, sn=ctrl_sn, ip=ctrl_ip)
-        json_body = sub(r',$', '', json_body)
-        json_full = '{"data":[' + json_body + ']}'
-        return json_full
+                ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
+                             "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
+                             "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
+                all_ctrls.append(ctrl_dict)
+            to_json = {"data": all_ctrls}
+        else:
+            to_json = {}
+        return dumps(to_json, separators=(',', ':'))
     else:
         SystemExit('ERROR: You should provide the storage component (vdisks, disks).')
 
