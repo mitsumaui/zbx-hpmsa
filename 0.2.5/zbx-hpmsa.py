@@ -89,7 +89,7 @@ def get_value(storage, sessionkey, component, item):
 
     # If return code is not 0, return response description message
     if int(response_return_code) != 0:
-        SystemExit("ERROR: {0}".format(response_description))
+        raise SystemExit("ERROR: {0}".format(response_description))
 
     # Returns statuses
     # vsisks
