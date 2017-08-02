@@ -37,13 +37,15 @@ def get_skey(storage, login, password):
             raise SystemExit('ERROR: ({func}) Cannot open URL {url}'.format(func=cur_fname, url=login_url))
         else:
             raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
-    response_xml = eTree.fromstring(query.read().decode())
-    session_key = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+    response = query.read()
+    response_xml = eTree.fromstring(response.decode())
+    response_return_code = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
+    response_message = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
 
-    if len(session_key) != 0:
-        return session_key
-    else:
-        raise SystemExit('ERROR: ({func}) Got zero-length value for session key'.format(func=cur_fname))
+    if response_return_code == '2':
+        return response_return_code
+    elif response_return_code == '1':
+        return response_message
 
 
 def get_value(storage, sessionkey, component, item):
@@ -82,6 +84,12 @@ def get_value(storage, sessionkey, component, item):
             raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
     response = query.read()
     response_xml = eTree.fromstring(response.decode())
+    response_return_code = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
+    response_description = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+
+    # If return code is not 0, return response description message
+    if int(response_return_code) != 0:
+        SystemExit("ERROR: {0}".format(response_description))
 
     # Returns statuses
     # vsisks
@@ -89,11 +97,15 @@ def get_value(storage, sessionkey, component, item):
         stat_arr = response_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
+        else:
+            return "ERROR: ({0}) response handle error.".format(cur_fname)
     # disks
     elif component == 'disks':
         stat_arr = response_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
+        else:
+            return "ERROR: ({0}) response handle error.".format(cur_fname)
     # controllers
     elif component == 'controllers':
         # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
@@ -111,7 +123,7 @@ def get_value(storage, sessionkey, component, item):
         if item in health_dict:
             return health_dict[item]
         else:
-            return 'ERROR: No such controller ({0})'.format(item)
+            return 'ERROR: No such controller ({0}). Found only these: {1}'.format(item, health_dict)
     # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
     else:
         return 'Wrong component: {cmp}'.format(cmp=component)
@@ -182,6 +194,7 @@ def make_discovery(storage, sessionkey, component):
 if __name__ == '__main__':
     # Current program version
     VERSION = '0.2.5'
+
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
@@ -198,7 +211,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     skey = get_skey(args.msa, args.user, args.password)
-    if skey == 'Authentication Unsuccessful':
+    if skey == "2":
         raise SystemExit('ERROR: Login or password is incorrect.')
     # Parsing arguments
     # Make no possible to use '-d' and '-g' options together
