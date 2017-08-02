@@ -44,3 +44,6 @@ Have fun and rate it on share.zabbix.com if you like it. =)
 
 **Tested with**:  
 HP MSA 2040
+
+**Known Issues**:
+- Sometimes appears the error "The user is not recognized on this system" though username and password are correct. There is no solve right now, I'm working on it.
