@@ -48,42 +48,6 @@ def get_skey(storage, login, password):
         return response_message
 
 
-def make_httpreq(url, sessionkey):
-    """
-    :param url:
-    URL to make GET request in <str>.
-    :param sessionkey:
-    Session key to authorize in <str>.
-    :return:
-    Tuple with return code <str>, return description <str> and eTree object <xml.etree.ElementTree.Element>.
-    """
-
-    # Helps with debug info
-    cur_fname = get_value.__name__
-
-    req = request.Request(url)
-    # Create 'sessionkey' header with skey
-    req.add_header('sessionKey', sessionkey)
-    # Trying to open the url
-    try:
-        query = request.urlopen(req)
-    except URLError:
-        exc_value = exc_info()[1]
-        if exc_value.reason.errno == 11001:
-            raise SystemExit('ERROR: ({func}) Cannot open URL: {url}'.format(func=cur_fname, url=url))
-        else:
-            raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
-    # Reading data from server response
-    response = query.read()
-    response_xml = eTree.fromstring(response.decode())
-    # Parse result XML to get return code and description
-    return_code = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
-    description = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
-    # Placing all data to the tuple which will be returned
-    return_tuple = (return_code, description, response_xml)
-    return return_tuple
-
-
 def get_value(storage, sessionkey, component, item):
     """
     :param storage:
@@ -101,47 +65,43 @@ def get_value(storage, sessionkey, component, item):
     # Helps with debug info
     cur_fname = get_value.__name__
 
-    # Forming URL
     if component in ['vdisks', 'disks']:
         get_url = 'http://{0}/api/show/{1}/{2}'.format(storage, component, item)
     elif component == 'controllers':
         get_url = 'http://{0}/api/show/{1}'.format(storage, component)
     else:
-        raise SystemExit('ERROR: Wrong component "{0}"'.format(component))
+        return SystemExit('ERROR: Wrong component')
+    req = request.Request(get_url)
+    req.add_header('sessionKey', sessionkey)
+    # Trying to make HTTP request
+    try:
+        query = request.urlopen(req)
+    except URLError:
+        exc_value = exc_info()[1]
+        if exc_value.reason.errno == 11001:
+            raise SystemExit('ERROR: ({func}) Cannot open URL: {url}'.format(func=cur_fname, url=get_url))
+        else:
+            raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
+    response = query.read()
+    response_xml = eTree.fromstring(response.decode())
+    response_return_code = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
+    response_description = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
 
-    # Making HTTP request with last formed URL and session key from get_skey()
-    response = make_httpreq(get_url, sessionkey)
-    if len(response) == 3:
-        resp_return_code, resp_description, resp_xml = response
-    else:
-        raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
-
-    # If return code is not 0 make workaround of authentication problem - just trying one more time
-    if int(resp_return_code) != 0:
-        attempts = 0
-        # Doing two attempts
-        while int(resp_return_code) != 0 and attempts < 3:
-            # Getting new session key
-            sessionkey = get_skey(args.msa, args.user, args.password)
-            # And making new request to the storage
-            response = make_httpreq(get_url, sessionkey)
-            resp_return_code, resp_description, resp_xml = response
-            attempts += 1
-
-        if int(resp_return_code) != 0:
-            raise SystemExit("ERROR: {0}".format(resp_description))
+    # If return code is not 0, return response description message
+    if int(response_return_code) != 0:
+        raise SystemExit("ERROR: {0}".format(response_description))
 
     # Returns statuses
     # vsisks
     if component == 'vdisks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
+        stat_arr = response_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
         else:
             return "ERROR: ({0}) response handle error.".format(cur_fname)
     # disks
     elif component == 'disks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
+        stat_arr = response_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
         else:
@@ -150,7 +110,7 @@ def get_value(storage, sessionkey, component, item):
     elif component == 'controllers':
         # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
         health_dict = {}
-        for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
+        for ctrl in response_xml.findall("./OBJECT[@name='controllers']"):
             # If length of item eq 1 symbols - it should be ID
             if len(item) == 1:
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
@@ -184,37 +144,40 @@ def make_discovery(storage, sessionkey, component):
     # Helps with debug info
     cur_fname = make_discovery.__name__
 
-    # Forming URL
     show_url = 'http://{0}/api/show/{1}'.format(storage, component)
-
-    # Making HTTP request to pull needed data
-    response = make_httpreq(show_url, sessionkey)
-    # If we've got 3 element tuple it's OK
-    if len(response) == 3:
-        resp_return_code, resp_description, resp_xml = response
-    else:
-        raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
-
-    if int(resp_return_code) != 0:
-        raise SystemExit("ERROR: {0}".format(resp_description))
-
+    req = request.Request(show_url)
+    req.add_header('sessionKey', sessionkey)
+    # Trying to make HTTP request
+    try:
+        query = request.urlopen(req)
+    except URLError:  # cannot open url
+        exc_value = exc_info()[1]
+        if exc_value.reason.errno == 11001:
+            raise SystemExit('ERROR: ({func}) Cannot open URL: {url}'.format(func=cur_fname, url=show_url))
+        else:
+            raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
     # Eject XML from response
+    response = query.read()
+    if len(response) != 0:
+        xml_data = eTree.fromstring(response.decode())
+    else:
+        raise SystemExit('ERROR: ({func}) Got zero-length XML result'.format(func=cur_fname))
     if component is not None or len(component) != 0:
         all_components = []
         if component == 'vdisks':
-            for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
+            for vdisk in xml_data.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component == 'disks':
-            for disk in resp_xml.findall("./OBJECT[@name='drive']"):
+            for disk in xml_data.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
                 disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component == 'controllers':
-            for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
+            for ctrl in xml_data.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
                 ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
                 ctrl_ip = ctrl.findall("./PROPERTY[@name='ip-address']")[0].text
@@ -230,7 +193,7 @@ def make_discovery(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.2.5.1'
+    VERSION = '0.2.6 (testing)'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
@@ -249,20 +212,18 @@ if __name__ == '__main__':
 
     # Getting session key and check it
     skey = get_skey(args.msa, args.user, args.password)
-    if skey != '2':
-        # Parsing arguments
-        # Make no possible to use '-d' and '-g' options together
-        if args.discovery is True and args.get is not None:
-            raise SystemExit("ERROR: You cannot use both '--discovery' and '--get' options.")
-
-        # If gets '--discovery' argument, make discovery
-        elif args.discovery is True:
-            print(make_discovery(args.msa, skey, args.component))
-
-        # If gets '--get' argument, getting value of component
-        elif args.get is not None and len(args.get) != 0:
-            print(get_value(args.msa, skey, args.component, args.get))
-        else:
-            raise SystemExit("Usage Error: You must use '--discovery' or '--get' option anyway.")
-    else:
+    if skey == '2':
         raise SystemExit('ERROR: Login or password is incorrect.')
+
+    # Parsing arguments
+    # Make no possible to use '-d' and '-g' options together
+    if args.discovery is True and args.get is not None:
+        raise SystemExit("ERROR: Use cannot use both '--discovery' and '--get' options.")
+    # If gets '--discovery' argument, make discovery
+    elif args.discovery is True:
+        print(make_discovery(args.msa, skey, args.component))
+    # If gets '--get' argument, getting value of component
+    elif args.get is not None and len(args.get) != 0:
+        print(get_value(args.msa, skey, args.component, args.get))
+    else:
+        raise SystemExit("Usage Error: You must use '--discovery' or '--get' option anyway.")
