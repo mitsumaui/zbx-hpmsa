@@ -5,9 +5,10 @@ Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/h
 Also you can contact me with vk.com: https://vk.com/asand3r
 
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
-Program wrote with Python 3.5, but works with Python 3.4 (I didn't check it with earlier versions, sorry) and doesn't depends of any external library.
+Program wrote with Python 3.5.3, but works with Python 3.4 (I didn't check it with earlier versions, sorry) and doesn't depends of any external library.
 
-**Latest version:** 0.2.5.
+**Latest stable version:** 0.2.5.1  
+**Latest testing version:** 0.2.6
 
 **Feautres**
 
@@ -46,4 +47,5 @@ Have fun and rate it on share.zabbix.com if you like it. =)
 HP MSA 2040
 
 **Known Issues**:
-- Sometimes appears the error "The user is not recognized on this system" though username and password are correct. There is no solve right now, I'm working on it.
+- ~~Sometimes appears the error "The user is not recognized on this system" though username and password are correct. There is no solve right now, I'm working on it. ~~
+ Think I've fixed it in 0.2.5.1.
