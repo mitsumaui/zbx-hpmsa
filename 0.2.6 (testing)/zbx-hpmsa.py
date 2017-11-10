@@ -98,23 +98,23 @@ def get_value(storage, sessionkey, component, item):
     HTTP response text in XML format.
     """
 
-    # Helps with debug info
+    # Helps with forming debug info
     cur_fname = get_value.__name__
 
     # Forming URL
-    if component in ['vdisks', 'disks']:
-        get_url = 'http://{0}/api/show/{1}/{2}'.format(storage, component, item)
-    elif component == 'controllers':
-        get_url = 'http://{0}/api/show/{1}'.format(storage, component)
+    if component.lower() in ['vdisks', 'disks']:
+        get_url = 'http://{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
+    elif component.lower() == 'controllers':
+        get_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
-        raise SystemExit('ERROR: Wrong component "{0}"'.format(component))
+        raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
 
     # Making HTTP request with last formed URL and session key from get_skey()
     response = make_httpreq(get_url, sessionkey)
     if len(response) == 3:
         resp_return_code, resp_description, resp_xml = response
     else:
-        raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
+        raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
 
     # If return code is not 0 make workaround of authentication problem - just trying one more time
     if int(resp_return_code) != 0:
@@ -129,25 +129,25 @@ def get_value(storage, sessionkey, component, item):
             attempts += 1
 
         if int(resp_return_code) != 0:
-            raise SystemExit("ERROR: {0}".format(resp_description))
+            raise SystemExit("ERROR: {rd}".format(rd=resp_description))
 
     # Returns statuses
-    # vsisks
-    if component == 'vdisks':
+    # vdisks
+    if component.lower() == 'vdisks':
         stat_arr = resp_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
         else:
-            return "ERROR: ({0}) response handle error.".format(cur_fname)
+            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # disks
-    elif component == 'disks':
+    elif component.lower() == 'disks':
         stat_arr = resp_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
         if len(stat_arr) == 1:
             return stat_arr[0].text
         else:
-            return "ERROR: ({0}) response handle error.".format(cur_fname)
+            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # controllers
-    elif component == 'controllers':
+    elif component.lower() == 'controllers':
         # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
         health_dict = {}
         for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
@@ -163,10 +163,10 @@ def get_value(storage, sessionkey, component, item):
         if item in health_dict:
             return health_dict[item]
         else:
-            return 'ERROR: No such controller ({0}). Found only these: {1}'.format(item, health_dict)
+            return 'ERROR: No such controller ({item}). Found only these: {hd}'.format(item=item, hd=health_dict)
     # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
     else:
-        return 'Wrong component: {cmp}'.format(cmp=component)
+        return 'Wrong component: {comp}'.format(comp=component)
 
 
 def make_discovery(storage, sessionkey, component):
@@ -201,19 +201,19 @@ def make_discovery(storage, sessionkey, component):
     # Eject XML from response
     if component is not None or len(component) != 0:
         all_components = []
-        if component == 'vdisks':
+        if component.lower() == 'vdisks':
             for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
                 vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
-        elif component == 'disks':
+        elif component.lower() == 'disks':
             for disk in resp_xml.findall("./OBJECT[@name='drive']"):
                 disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
                 disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
-        elif component == 'controllers':
+        elif component.lower() == 'controllers':
             for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
                 ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
                 ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
@@ -249,6 +249,7 @@ if __name__ == '__main__':
 
     # Getting session key and check it
     skey = get_skey(args.msa, args.user, args.password)
+
     if skey != '2':
         # Parsing arguments
         # Make no possible to use '-d' and '-g' options together
