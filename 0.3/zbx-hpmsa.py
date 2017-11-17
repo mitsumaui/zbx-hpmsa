@@ -252,33 +252,41 @@ def get_all_data(storage, sessionkey, component):
         raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=get_url))
 
     if response.status_code == 200:
+        # Making XML
         xml = eTree.fromstring(response.text)
-        all_components = []
+        all_components = {}
         if component == 'disks':
             for PROP in xml.findall("./OBJECT[@name='drive']"):
                 # Getting data from XML
                 disk_location = PROP.findall("./PROPERTY[@name='location']")[0].text
-                disk_sn = PROP.findall("./PROPERTY[@name='serial-number']")[0].text
+                disk_health = PROP.findall("./PROPERTY[@name='health']")[0].text
                 disk_temp = PROP.findall("./PROPERTY[@name='temperature-numeric']")[0].text
                 disk_work_hours = PROP.findall("./PROPERTY[@name='power-on-hours']")[0].text
-                # Making array with one disk data
-                disk = {
-                    disk_location: {
-                        "disk_sn": disk_sn,
-                        "disk_temp": disk_temp,
-                        "disk_wh": disk_work_hours
-                    }
+                # Making dict with one disk data
+                disk_info = {
+                        "health": disk_health,
+                        "temperature": disk_temp,
+                        "work_hours": disk_work_hours
                 }
-                # Adding one disk info to common list
-                all_components.append(disk)
+                # Adding one disk to common dict
+                all_components[disk_location] = disk_info
         elif component == 'vdisks':
-            pass
+            for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
+                # Getting data from XML
+                vdisk_name = PROP.findall("./PROPERTY[@name='name']")
+                vdisk_health = PROP.findall("./PROPERTY[@name='health']")
+
+                # Making dict with one vdisk data
+                vdisk_info = {
+                        "health": vdisk_health
+                }
+                # Adding one vdisk to common dict
+                all_components[vdisk_name] = vdisk_info
         elif component == 'controllers':
             pass
         else:
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
-        to_json = {'data': all_components}
-        return dumps(to_json, separators=(',', ':'))
+        return dumps(all_components)
 
 
 if __name__ == '__main__':
