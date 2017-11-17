@@ -7,6 +7,7 @@ from urllib import request
 from urllib.error import URLError
 from argparse import ArgumentParser
 from json import dumps
+import requests
 
 
 def get_skey(storage, login, password):
@@ -225,12 +226,64 @@ def make_discovery(storage, sessionkey, component):
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+
+
+def get_all_data(storage, sessionkey, component):
+    """
+    :param storage:
+    String with storage name in DNS or it's IP address.
+    :param sessionkey:
+    String with session key, which must be attach to the request header.
+    :param component:
+    Name of storage component, what we want to get - vdisks, disks, etc.
+    :return:
+    XML in text.
+    """
+
+    # Helps with forming debug info
+    cur_fname = get_all_data.__name__
+
+    get_url = 'http://{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
+    # Trying to open the url
+    try:
+        response = requests.get(get_url, headers={'sessionKey': sessionkey})
+    except requests.exceptions.ConnectionError:
+        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=get_url))
+
+    if response.status_code == 200:
+        xml = eTree.fromstring(response.text)
+        all_components = []
+        if component == 'disks':
+            for PROP in xml.findall("./OBJECT[@name='drive']"):
+                # Getting data from XML
+                disk_location = PROP.findall("./PROPERTY[@name='location']")[0].text
+                disk_sn = PROP.findall("./PROPERTY[@name='serial-number']")[0].text
+                disk_temp = PROP.findall("./PROPERTY[@name='temperature-numeric']")[0].text
+                disk_work_hours = PROP.findall("./PROPERTY[@name='power-on-hours']")[0].text
+                # Making array with one disk data
+                disk = {
+                    disk_location: {
+                        "disk_sn": disk_sn,
+                        "disk_temp": disk_temp,
+                        "disk_wh": disk_work_hours
+                    }
+                }
+                # Adding one disk info to common list
+                all_components.append(disk)
+        elif component == 'vdisks':
+            pass
+        elif component == 'controllers':
+            pass
+        else:
+            raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+        to_json = {'data': all_components}
+        return dumps(to_json, separators=(',', ':'))
 
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.2.6'
+    VERSION = '0.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
