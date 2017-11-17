@@ -238,7 +238,8 @@ def get_all_data(storage, sessionkey, component):
     :param component:
     Name of storage component, what we want to get - vdisks, disks, etc.
     :return:
-    XML in text.
+    JSON with all found data. For example:
+    {"1.1": { "health": "OK", "temperature": 25, "work_hours": 1234}, "1.2": { ... }}
     """
 
     # Helps with forming debug info
@@ -286,6 +287,7 @@ def get_all_data(storage, sessionkey, component):
             pass
         else:
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+        # Making JSON with dumps() and return it.
         return dumps(all_components)
 
 
