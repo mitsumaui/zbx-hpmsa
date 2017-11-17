@@ -22,7 +22,8 @@ Component status:
  - [x] controllers
  
  **TODO**
- - Enclosures monitoring
+ - [ ] Enclosures monitoring
+ - [ ] Bulk requests for Zabbix 3.4
 
 **Usage**
   - LLD:
