@@ -257,12 +257,12 @@ def get_all_data(storage, sessionkey, component):
         xml = eTree.fromstring(response.text)
         all_components = {}
         if component == 'disks':
-            for PROP in xml.findall("./OBJECT[@name='drive']"):
+            for PROP in xml.findall("OBJECT[@name='drive']"):
                 # Getting data from XML
-                disk_location = PROP.findall("./PROPERTY[@name='location']")[0].text
-                disk_health = PROP.findall("./PROPERTY[@name='health']")[0].text
-                disk_temp = PROP.findall("./PROPERTY[@name='temperature-numeric']")[0].text
-                disk_work_hours = PROP.findall("./PROPERTY[@name='power-on-hours']")[0].text
+                disk_location = PROP.find("PROPERTY[@name='location']").text
+                disk_health = PROP.find("PROPERTY[@name='health']").text
+                disk_temp = PROP.find("PROPERTY[@name='temperature-numeric']").text
+                disk_work_hours = PROP.find("PROPERTY[@name='power-on-hours']").text
                 # Making dict with one disk data
                 disk_info = {
                         "health": disk_health,
@@ -272,10 +272,10 @@ def get_all_data(storage, sessionkey, component):
                 # Adding one disk to common dict
                 all_components[disk_location] = disk_info
         elif component == 'vdisks':
-            for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
+            for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
                 # Getting data from XML
-                vdisk_name = PROP.findall("./PROPERTY[@name='name']")
-                vdisk_health = PROP.findall("./PROPERTY[@name='health']")
+                vdisk_name = PROP.find("./PROPERTY[@name='name']").text
+                vdisk_health = PROP.find("./PROPERTY[@name='health']").text
 
                 # Making dict with one vdisk data
                 vdisk_info = {
@@ -289,6 +289,21 @@ def get_all_data(storage, sessionkey, component):
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
         # Making JSON with dumps() and return it.
         return dumps(all_components)
+
+
+def cache_skey(sessionkey):
+    """
+    Cached to file session key got earlier.
+    :param sessionkey:
+    String with sessiong key got from HP MSA.
+    :return:
+    Cached session key.
+    """
+
+    cfile_name = '/tmp/zbx-hpmsa.skey'
+
+    with open(cfile_name, "w") as cfile:
+        cfile.write(sessionkey)
 
 
 if __name__ == '__main__':
@@ -307,7 +322,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
                         help='MSA component to monitor',
                         metavar='<disks>,<vdisks>,<controllers>')
-    parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just show program version')
+    parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just print program version')
     args = parser.parse_args()
 
     # Getting session key and check it
