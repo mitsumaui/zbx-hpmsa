@@ -239,7 +239,10 @@ def get_all_data(storage, sessionkey, component):
     Name of storage component, what we want to get - vdisks, disks, etc.
     :return:
     JSON with all found data. For example:
+    Disks:
     {"1.1": { "health": "OK", "temperature": 25, "work_hours": 1234}, "1.2": { ... }}
+    Vdisks:
+    {"vdisk01": { "health": "OK" }, vdisk02: {"health": "OK"} }
     """
 
     # Helps with forming debug info
@@ -274,8 +277,8 @@ def get_all_data(storage, sessionkey, component):
         elif component == 'vdisks':
             for PROP in xml.findall("OBJECT[@name='virtual-disk']"):
                 # Getting data from XML
-                vdisk_name = PROP.find("./PROPERTY[@name='name']").text
-                vdisk_health = PROP.find("./PROPERTY[@name='health']").text
+                vdisk_name = PROP.find("PROPERTY[@name='name']").text
+                vdisk_health = PROP.find("PROPERTY[@name='health']").text
 
                 # Making dict with one vdisk data
                 vdisk_info = {
@@ -284,7 +287,30 @@ def get_all_data(storage, sessionkey, component):
                 # Adding one vdisk to common dict
                 all_components[vdisk_name] = vdisk_info
         elif component == 'controllers':
-            pass
+            for PROP in xml.findall("OBJECT[@name='controllers']"):
+                # Getting data from XML
+                ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
+                ctrl_health = PROP.find("PROPERTY[@name='health']").text
+                cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
+                # Getting all FC ports
+                ports_info = {}
+                for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
+                    port_name = FC_PORT.find("PROPERTY[@name='port']").text
+                    port_health = FC_PORT.find("PROPERTY[@name='health']").text
+                    port_status = FC_PORT.find("PROPERTY[@name='status']").text
+                    sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
+                    ports_info[port_name] = {
+                        "health": port_health,
+                        "status": port_status,
+                        "sfp_status": sfp_status
+                    }
+                    # Making dict with one controller info
+                    ctrl_info = {
+                        "health": ctrl_health,
+                        "cf_health": cf_health,
+                        "ports": ports_info
+                    }
+                    all_components[ctrl_id] = ctrl_info
         else:
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
         # Making JSON with dumps() and return it.
