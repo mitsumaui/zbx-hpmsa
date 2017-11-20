@@ -1,4 +1,5 @@
 # Verion 0.3
+## The version is still develops, but you can try it now - common functionality already works.
 This version developed special for using with Zabbix 3.4 and it has great new functionality - dependent items.  
 Besides of many code correction we have two most ipornant changes: 
 1. Now zbx-hpmsa depends of 'requests' library. I have to used it because of can't force urllib works with huge XML response (I know, it's my problem, but nothing can do with it);
