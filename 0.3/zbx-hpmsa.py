@@ -338,18 +338,18 @@ if __name__ == '__main__':
     VERSION = '0.3'
 
     # Parse all given arguments
-    parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
+    parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID|VDISKNAME|CONTROLLERID|CONTROLLERSN>')
+                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|bulk')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
-                        metavar='<IP> or <DNSNAME>')
+                        metavar='[<IP>|<DNSNAME>]')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
                         help='MSA component to monitor',
-                        metavar='<disks>,<vdisks>,<controllers>')
-    parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just print program version')
+                        metavar='[disks|vdisks|controllers]')
+    parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
     # Getting session key and check it
@@ -366,9 +366,11 @@ if __name__ == '__main__':
             print(make_discovery(args.msa, skey, args.component))
 
         # If gets '--get' argument, getting value of component
-        elif args.get is not None and len(args.get) != 0:
+        elif args.get is not None and len(args.get) != 0 and args.get != 'bulk':
             print(get_value(args.msa, skey, args.component, args.get))
+        elif args.get == 'bulk':
+            print(get_all_data(args.msa, skey, args.component))
         else:
-            raise SystemExit("Usage Error: You must use '--discovery' or '--get' option anyway.")
+            raise SystemExit("Usage Error: You must use '--discovery', '--get' or '--bulk' option anyway.")
     else:
         raise SystemExit('ERROR: Login or password is incorrect.')
