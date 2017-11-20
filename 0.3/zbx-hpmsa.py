@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 import xml.etree.ElementTree as eTree
-from sys import exc_info
 from hashlib import md5
-from urllib import request
-from urllib.error import URLError
 from argparse import ArgumentParser
 from json import dumps
 import requests
