@@ -12,6 +12,7 @@ import requests
 
 def get_skey(storage, login, password):
     """
+    Get's session key from HP MSA API.
     :param storage:
     String with storage name in DNS or it's IP address.
     :param login:
@@ -19,7 +20,7 @@ def get_skey(storage, login, password):
     :param password:
     String with MSA password.
     :return:
-    Session key as <str> of error code as <str>
+    Session key as <str> or error code as <str>
     """
 
     # Helps with debug info
@@ -28,20 +29,16 @@ def get_skey(storage, login, password):
     # Combine login and password to 'login_password' format.
     login_data = '_'.join([login, password])
     login_hash = md5(login_data.encode()).hexdigest()
+    # Forming URL to get auth token
     login_url = 'http://{0}/api/login/{1}'.format(storage, login_hash)
-    # Trying to make HTTP request
+    # Trying to make GET query
     try:
-        query = request.urlopen(login_url)
-    except URLError:
-        exc_value = exc_info()[1]
-        if exc_value.reason.errno == 11001:
-            raise SystemExit('ERROR: ({func}) Cannot open URL {url}'.format(func=cur_fname, url=login_url))
-        else:
-            raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
-    response = query.read()
-    response_xml = eTree.fromstring(response.decode())
-    return_code = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
-    response_message = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+        response = requests.get(login_url)
+    except requests.exceptions.ConnectionError:
+        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=login_url))
+    response_xml = eTree.fromstring(response.text)
+    return_code = response_xml.find(".//PROPERTY[@name='return-code']").text
+    response_message = response_xml.find(".//PROPERTY[@name='response']").text
 
     if return_code == '2':  # 2 - Authentication Unsuccessful, return 2 as <str>
         return return_code
@@ -49,8 +46,9 @@ def get_skey(storage, login, password):
         return response_message
 
 
-def make_httpreq(url, sessionkey):
+def query_xmlapi(url, sessionkey):
     """
+    Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
     :param url:
     URL to make GET request in <str>.
     :param sessionkey:
@@ -60,26 +58,17 @@ def make_httpreq(url, sessionkey):
     """
 
     # Helps with debug info
-    cur_fname = get_value.__name__
+    cur_fname = query_xmlapi.__name__
 
-    req = request.Request(url)
-    # Create 'sessionkey' header with skey
-    req.add_header('sessionKey', sessionkey)
-    # Trying to open the url
     try:
-        query = request.urlopen(req)
-    except URLError:
-        exc_value = exc_info()[1]
-        if exc_value.reason.errno == 11001:
-            raise SystemExit('ERROR: ({func}) Cannot open URL: {url}'.format(func=cur_fname, url=url))
-        else:
-            raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
+        response = requests.get(url, headers={'sessionKey': sessionkey})
+    except requests.exceptions.ConnectionError:
+        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=url))
     # Reading data from server response
-    response = query.read()
-    response_xml = eTree.fromstring(response.decode())
+    response_xml = eTree.fromstring(response.text)
     # Parse result XML to get return code and description
-    return_code = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
-    description = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+    return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
+    description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
     # Placing all data to the tuple which will be returned
     return_tuple = (return_code, description, response_xml)
     return return_tuple
@@ -87,6 +76,7 @@ def make_httpreq(url, sessionkey):
 
 def get_value(storage, sessionkey, component, item):
     """
+    The function gets single item of MSA component. E.g. - status of one disk. It may be useful for Zabbix < 3.4.
     :param storage:
     String with storage name in DNS or it's IP address.
     :param sessionkey:
@@ -103,7 +93,7 @@ def get_value(storage, sessionkey, component, item):
     cur_fname = get_value.__name__
 
     # Forming URL
-    if component.lower() in ['vdisks', 'disks']:
+    if component.lower() in ('vdisks', 'disks'):
         get_url = 'http://{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
     elif component.lower() == 'controllers':
         get_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
@@ -111,7 +101,7 @@ def get_value(storage, sessionkey, component, item):
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
 
     # Making HTTP request with last formed URL and session key from get_skey()
-    response = make_httpreq(get_url, sessionkey)
+    response = query_xmlapi(get_url, sessionkey)
     if len(response) == 3:
         resp_return_code, resp_description, resp_xml = response
     else:
@@ -125,7 +115,7 @@ def get_value(storage, sessionkey, component, item):
             # Getting new session key
             sessionkey = get_skey(args.msa, args.user, args.password)
             # And making new request to the storage
-            response = make_httpreq(get_url, sessionkey)
+            response = query_xmlapi(get_url, sessionkey)
             resp_return_code, resp_description, resp_xml = response
             attempts += 1
 
@@ -135,16 +125,16 @@ def get_value(storage, sessionkey, component, item):
     # Returns statuses
     # vdisks
     if component.lower() == 'vdisks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
-        if len(stat_arr) == 1:
-            return stat_arr[0].text
+        vdisk_health = resp_xml.find("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']").text
+        if len(vdisk_health) != 0:
+            return vdisk_health
         else:
             return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # disks
     elif component.lower() == 'disks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
-        if len(stat_arr) == 1:
-            return stat_arr[0].text
+        disk_health = resp_xml.find("./OBJECT[@name='drive']/PROPERTY[@name='health']").text
+        if len(disk_health) != 1:
+            return disk_health
         else:
             return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # controllers
@@ -154,13 +144,13 @@ def get_value(storage, sessionkey, component, item):
         for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
             # If length of item eq 1 symbols - it should be ID
             if len(item) == 1:
-                ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
             # serial number, I think. Maybe I should add possibility to search controller by IP?..
             else:
-                ctrl_id = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
-            ctrl_health = ctrl.findall("./PROPERTY[@name='health']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='serial-number']").text
+            ctrl_health = ctrl.find("./PROPERTY[@name='health']").text
             health_dict[ctrl_id] = ctrl_health
-        # If given item in our dict - return status
+        # If given item presents in our dict - return status
         if item in health_dict:
             return health_dict[item]
         else:
@@ -189,7 +179,7 @@ def make_discovery(storage, sessionkey, component):
     show_url = 'http://{0}/api/show/{1}'.format(storage, component)
 
     # Making HTTP request to pull needed data
-    response = make_httpreq(show_url, sessionkey)
+    response = query_xmlapi(show_url, sessionkey)
     # If we've got 3 element tuple it's OK
     if len(response) == 3:
         resp_return_code, resp_description, resp_xml = response
@@ -204,21 +194,21 @@ def make_discovery(storage, sessionkey, component):
         all_components = []
         if component.lower() == 'vdisks':
             for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
-                vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
+                vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component.lower() == 'disks':
             for disk in resp_xml.findall("./OBJECT[@name='drive']"):
-                disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
-                disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
+                disk_loc = disk.find("./PROPERTY[@name='location']").text
+                disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component.lower() == 'controllers':
             for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
-                ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
-                ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
-                ctrl_ip = ctrl.findall("./PROPERTY[@name='ip-address']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
+                ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
+                ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
@@ -229,7 +219,7 @@ def make_discovery(storage, sessionkey, component):
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
 
 
-def get_all_data(storage, sessionkey, component):
+def get_bulk_data(storage, sessionkey, component):
     """
     :param storage:
     String with storage name in DNS or it's IP address.
@@ -246,7 +236,7 @@ def get_all_data(storage, sessionkey, component):
     """
 
     # Helps with forming debug info
-    cur_fname = get_all_data.__name__
+    cur_fname = get_bulk_data.__name__
 
     get_url = 'http://{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
     # Trying to open the url
@@ -314,23 +304,8 @@ def get_all_data(storage, sessionkey, component):
                     all_components[ctrl_id] = ctrl_info
         else:
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
-        # Making JSON with dumps() and return it.
-        return dumps(all_components)
-
-
-def cache_skey(sessionkey):
-    """
-    Cached to file session key got earlier.
-    :param sessionkey:
-    String with sessiong key got from HP MSA.
-    :return:
-    Cached session key.
-    """
-
-    cfile_name = '/tmp/zbx-hpmsa.skey'
-
-    with open(cfile_name, "w") as cfile:
-        cfile.write(sessionkey)
+        # Making JSON with dumps() and return it (separators needs to make JSON compact)
+        return dumps(all_components, separators=(',', ':'))
 
 
 if __name__ == '__main__':
@@ -369,7 +344,7 @@ if __name__ == '__main__':
         elif args.get is not None and len(args.get) != 0 and args.get != 'bulk':
             print(get_value(args.msa, skey, args.component, args.get))
         elif args.get == 'bulk':
-            print(get_all_data(args.msa, skey, args.component))
+            print(get_bulk_data(args.msa, skey, args.component))
         else:
             raise SystemExit("Usage Error: You must use '--discovery', '--get' or '--bulk' option anyway.")
     else:
