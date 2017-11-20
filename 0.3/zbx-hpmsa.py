@@ -292,19 +292,20 @@ def get_all_data(storage, sessionkey, component):
                 ctrl_id = PROP.find("PROPERTY[@name='controller-id']").text
                 ctrl_health = PROP.find("PROPERTY[@name='health']").text
                 cf_health = PROP.find("OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
-                # Getting all FC ports
+                # Getting info for all FC ports
                 ports_info = {}
                 for FC_PORT in PROP.findall("OBJECT[@name='ports']"):
                     port_name = FC_PORT.find("PROPERTY[@name='port']").text
                     port_health = FC_PORT.find("PROPERTY[@name='health']").text
                     port_status = FC_PORT.find("PROPERTY[@name='status']").text
                     sfp_status = FC_PORT.find("OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
+                    # Puts all info into dict
                     ports_info[port_name] = {
                         "health": port_health,
                         "status": port_status,
                         "sfp_status": sfp_status
                     }
-                    # Making dict with one controller info
+                    # Making final dict with info of the one controller
                     ctrl_info = {
                         "health": ctrl_health,
                         "cf_health": cf_health,
