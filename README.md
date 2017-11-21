@@ -31,7 +31,7 @@ Component status:
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [ ] Enclosures monitoring
 
-**Usage**
+## Usage
   - LLD:
   ```bash
     [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
