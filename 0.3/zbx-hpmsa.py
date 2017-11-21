@@ -343,6 +343,6 @@ if __name__ == '__main__':
         elif args.get == 'all':
             print(get_all(args.msa, skey, args.component))
         else:
-            raise SystemExit("Usage Error: You must use '--discovery', '--get' or '--all' option anyway.")
+            raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
     else:
         raise SystemExit('ERROR: Login or password is incorrect.')
