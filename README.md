@@ -28,7 +28,7 @@ Component status:
  
  ## Version 0.3 (dev)
  Version 0.3 get all features that 0.2 has. Also it has the same arguments and can be use like 0.2, but now you must install 'requests' library first.  
- - [x] Bulk requests for Zabbix 3.4
+ - [x] Bulk requests for dependent items of Zabbix 3.4
  - [ ] Enclosures monitoring
 
 **Usage**
