@@ -39,8 +39,8 @@ def get_skey(storage, login, password):
             raise SystemExit('ERROR: ({func}), {reason}'.format(func=cur_fname, reason=exc_value.reason))
     response = query.read()
     response_xml = eTree.fromstring(response.decode())
-    return_code = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
-    response_message = response_xml.findall(".//OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+    return_code = response_xml.find(".//PROPERTY[@name='return-code']").text
+    response_message = response_xml.find(".//PROPERTY[@name='response']").text
 
     if return_code == '2':  # 2 - Authentication Unsuccessful, return 2 as <str>
         return return_code
@@ -77,8 +77,8 @@ def make_httpreq(url, sessionkey):
     response = query.read()
     response_xml = eTree.fromstring(response.decode())
     # Parse result XML to get return code and description
-    return_code = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='return-code']")[0].text
-    description = response_xml.findall("./OBJECT[@name='status']/PROPERTY[@name='response']")[0].text
+    return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
+    description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
     # Placing all data to the tuple which will be returned
     return_tuple = (return_code, description, response_xml)
     return return_tuple
@@ -133,19 +133,19 @@ def get_value(storage, sessionkey, component, item):
 
     # Returns statuses
     # vsisks
-    if component == 'vdisks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']")
-        if len(stat_arr) == 1:
-            return stat_arr[0].text
+    if component.lower() == 'vdisks':
+        vdisk_health = resp_xml.find("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']").text
+        if len(vdisk_health) != 0:
+            return vdisk_health
         else:
-            return "ERROR: ({0}) response handle error.".format(cur_fname)
+            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # disks
-    elif component == 'disks':
-        stat_arr = resp_xml.findall("./OBJECT[@name='drive']/PROPERTY[@name='health']")
-        if len(stat_arr) == 1:
-            return stat_arr[0].text
+    elif component.lower() == 'disks':
+        disk_health = resp_xml.find("./OBJECT[@name='drive']/PROPERTY[@name='health']").text
+        if len(disk_health) != 1:
+            return disk_health
         else:
-            return "ERROR: ({0}) response handle error.".format(cur_fname)
+            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
     # controllers
     elif component == 'controllers':
         # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
@@ -153,11 +153,11 @@ def get_value(storage, sessionkey, component, item):
         for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
             # If length of item eq 1 symbols - it should be ID
             if len(item) == 1:
-                ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
             # serial number, I think. Maybe I should add possibility to search controller by IP?..
             else:
-                ctrl_id = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
-            ctrl_health = ctrl.findall("./PROPERTY[@name='health']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='serial-number']").text
+            ctrl_health = ctrl.find("./PROPERTY[@name='health']").text
             health_dict[ctrl_id] = ctrl_health
         # If given item in our dict - return status
         if item in health_dict:
@@ -203,21 +203,21 @@ def make_discovery(storage, sessionkey, component):
         all_components = []
         if component == 'vdisks':
             for vdisk in resp_xml.findall("./OBJECT[@name='virtual-disk']"):
-                vdisk_name = vdisk.findall("./PROPERTY[@name='name']")[0].text
+                vdisk_name = vdisk.find("./PROPERTY[@name='name']").text
                 vdisk_dict = {"{#VDISKNAME}": "{name}".format(name=vdisk_name)}
                 all_components.append(vdisk_dict)
         elif component == 'disks':
             for disk in resp_xml.findall("./OBJECT[@name='drive']"):
-                disk_loc = disk.findall("./PROPERTY[@name='location']")[0].text
-                disk_sn = disk.findall("./PROPERTY[@name='serial-number']")[0].text
+                disk_loc = disk.find("./PROPERTY[@name='location']").text
+                disk_sn = disk.find("./PROPERTY[@name='serial-number']").text
                 disk_dict = {"{#DISKLOCATION}": "{loc}".format(loc=disk_loc),
                              "{#DISKSN}": "{sn}".format(sn=disk_sn)}
                 all_components.append(disk_dict)
         elif component == 'controllers':
             for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
-                ctrl_id = ctrl.findall("./PROPERTY[@name='controller-id']")[0].text
-                ctrl_sn = ctrl.findall("./PROPERTY[@name='serial-number']")[0].text
-                ctrl_ip = ctrl.findall("./PROPERTY[@name='ip-address']")[0].text
+                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
+                ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
+                ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
@@ -230,7 +230,7 @@ def make_discovery(storage, sessionkey, component):
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.2.5.1'
+    VERSION = '0.2.5.2'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
