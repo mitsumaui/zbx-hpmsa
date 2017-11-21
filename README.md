@@ -1,9 +1,15 @@
 # zbx-hpmsa
-Zabbix module to monitor HP MSA storages via XML API.  
-For now it has two versions - 0.2 and 0.3. The first one developed forworking with Zabbix 3.0-3.2 and it makes two request to HP MSA API every time - one for authentication and one for getting data. Unfortunately, this mechanism has one limitation - we cannot get more data than one or two per item and do not crash the API (e.g. to get status of one disk you should kame two requests. Now, multiply it for 24 disks and feel the problem). Some people uses something like 'cache' - get all possible data with one request and put it to file, where from they takes data to Zabbix. Luckily for me, when I found this problem Zabbix 3.4 has been released. =) So, I've developed new version - 0.3 - using [dependent items](https://www.zabbix.com/documentation/3.4/manual/config/items/itemtypes/dependent_items) functionality.
-
-Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
+Zabbix module to monitor HP MSA storages via XML API.
+Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api
 Also you can contact me with vk.com: https://vk.com/asand3r
+
+For now it has two major versions - '0.2' and '0.3'. The first one developed for working with Zabbix 3.0-3.2 (maybe lower too, but I didn't check)
+and it must makes two request to HP MSA API to get one value - one for authentication and one for getting data. Unfortunately, there is an important
+limitation in that mechanism - we cannot get more metrics than one or two per HP MSA component without crashing the API. E.g. to get health status of
+one disk you should make two requests. Let's suppose, you want to get temperature for the same disk too - it's plus two more requests to API.
+Now, multiply it for 24 disks and feel the problem. People uses something like 'cache' as workaround - get all possible data with one request and put it
+to a file, where from they send data to Zabbix. Luckily for me, when I found this problem Zabbix 3.4 has been released. =) So, I've developed new version
+using [dependent items](https://www.zabbix.com/documentation/3.4/manual/config/items/itemtypes/dependent_items) functionality.
 
 ## Version 0.2
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
