@@ -55,17 +55,20 @@ OK
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all
 {"1.1":{"health":"OK","temperature":"25","work_hours":"21170"},"1.2":{"health":"OK","temperature":"24","work_hours":"21168"}, ...}
 ```
-**Zabbix template (v0.2)**
-In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage has default user with default password - 'monitor'/'!monitor', but if it isn't true - correct it with '-u' and '-p' options (for example "./zbx-hpmsa['-d', '-m', '192.168.1.1', '-c', 'vdisks', '-u', 'FOO', '-p', 'BAR']").
 
-**Zabbix template (v0.3)**  
-Will be added soon.  
-
+## Zabbix templates
+In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality
+and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage
+has default user with default password - 'monitor'/'!monitor', but if it isn't true - correct it with '-u' and '-p' options. You can check it it command line:
+```bash
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all --user FOO --password BAR
+```
+Template will works both in 0.2 and 0.3 versions, also I'll add template with dependent items soon.
 Have fun and rate it on share.zabbix.com if you like it. =)
 
 **Tested with**:  
 HP MSA 2040
 
 **Known Issues**:
-- Sometimes appears the error "The user is not recognized on this system" though username and password are correct. There is no solve right now, I'm working on it.  
-**Think I've fixed it in 0.2.5.1.**
+- Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
+  - Think I've fixed it in 0.2.5.1. But it's may be not exactly. =) The 0.3 version shouldn't has this problem by design.
