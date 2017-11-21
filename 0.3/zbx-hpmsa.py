@@ -216,7 +216,7 @@ def make_discovery(storage, sessionkey, component):
         raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
 
 
-def get_bulk_data(storage, sessionkey, component):
+def get_all(storage, sessionkey, component):
     """
     :param storage:
     String with storage name in DNS or it's IP address.
@@ -233,7 +233,7 @@ def get_bulk_data(storage, sessionkey, component):
     """
 
     # Helps with forming debug info
-    cur_fname = get_bulk_data.__name__
+    cur_fname = get_all.__name__
 
     get_url = 'http://{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
     # Trying to open the url
@@ -313,7 +313,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|bulk')
+                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|all')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
@@ -338,11 +338,11 @@ if __name__ == '__main__':
             print(make_discovery(args.msa, skey, args.component))
 
         # If gets '--get' argument, getting value of component
-        elif args.get is not None and len(args.get) != 0 and args.get != 'bulk':
+        elif args.get is not None and len(args.get) != 0 and args.get != 'all':
             print(get_value(args.msa, skey, args.component, args.get))
-        elif args.get == 'bulk':
-            print(get_bulk_data(args.msa, skey, args.component))
+        elif args.get == 'all':
+            print(get_all(args.msa, skey, args.component))
         else:
-            raise SystemExit("Usage Error: You must use '--discovery', '--get' or '--bulk' option anyway.")
+            raise SystemExit("Usage Error: You must use '--discovery', '--get' or '--all' option anyway.")
     else:
         raise SystemExit('ERROR: Login or password is incorrect.')

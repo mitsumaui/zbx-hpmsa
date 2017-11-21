@@ -32,19 +32,24 @@ Component status:
  - [ ] Enclosures monitoring
 
 ## Usage
-  - LLD:
-  ```bash
-    [user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
-    
-    {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
-  ```
-  - Component status:
-  ```bash
-    [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get 1.1
-    
-    OK
-  ```
-**Zabbix template (v0.2)**  
+- Both 0.2 and 0.3 versions has LLD of controllers, vdisks and disks:
+```bash
+[user@server ~] # ./zbx-hpmsa.py --discovery --msa MSA-NAME-OR-IP --component vdisks
+
+{"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
+```
+- Also, they can request health status of one component. E.g. disk 1.1:
+```bash
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get 1.1
+
+OK
+```
+- Version 0.3 can make bulk request to get all available data:
+```bash
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all
+{"1.1":{"health":"OK","temperature":"25","work_hours":"21170"},"1.2":{"health":"OK","temperature":"24","work_hours":"21168"}, ...}
+```
+**Zabbix template (v0.2)**
 In addition I've attached preconfigured Zabbix Template here, so you can use it in your environment. It's using Low Level Discovery functionality and {HOST.CONN} macro to determine HTTP connection URL, so make sure that it points to right DNS name or IP. This template expects what your MSA storage has default user with default password - 'monitor'/'!monitor', but if it isn't true - correct it with '-u' and '-p' options (for example "./zbx-hpmsa['-d', '-m', '192.168.1.1', '-c', 'vdisks', '-u', 'FOO', '-p', 'BAR']").
 
 **Zabbix template (v0.3)**  
