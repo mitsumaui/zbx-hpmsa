@@ -172,6 +172,24 @@ def make_discovery(storage, sessionkey, component):
     # Helps with debug info
     cur_fname = make_discovery.__name__
 
+    # Yeah, hell! Some shit workaround code here!
+    if component.lower() == 'all':
+        all_components = []
+        for comp in ['disks', 'vdisks', 'controllers']:
+            data = get_all(storage, sessionkey, comp)
+            # print('Data from get_all:\n', data)
+            # print('\n')
+            if comp == 'disks':
+                data_dict = {"{#ALL_DISKS}": data}
+            elif comp == 'vdisks':
+                data_dict = {"{#ALL_VDISKS}": data}
+            elif comp == 'controllers':
+                data_dict = {"{#ALL_CONTROLLERS}": data}
+            else:
+                raise SystemExit("ERROR: Wrong component - '{0}'".format(comp))
+            all_components.append(data_dict)
+        return {"data": all_components}
+
     # Forming URL
     show_url = 'http://{0}/api/show/{1}'.format(storage, component)
 
@@ -210,19 +228,6 @@ def make_discovery(storage, sessionkey, component):
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
                 all_components.append(ctrl_dict)
-        elif component.lower() == 'all':
-            all_components = []
-            for comp in ['disks', 'vdisks', 'controllers']:
-                data = get_all(storage, sessionkey, comp)
-                if comp == 'disks':
-                    data_dict = {"{#ALL_DISKS}": data}
-                elif comp == 'vdisks':
-                    data_dict = {"{#ALL_VDISKS}": data}
-                elif comp == 'controllers':
-                    data_dict = {"{#ALL_CONTROLLERS}": data}
-                else:
-                    raise SystemExit("ERROR: Wrong component - '{0}'".format(comp))
-                all_components.append(data_dict)
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
@@ -349,7 +354,6 @@ if __name__ == '__main__':
         # If gets '--discovery' argument, make discovery
         elif args.discovery is True:
             print(make_discovery(args.msa, skey, args.component))
-
         # If gets '--get' argument, getting value of component
         elif args.get is not None and len(args.get) != 0 and args.get != 'all':
             print(get_value(args.msa, skey, args.component, args.get))
