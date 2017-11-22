@@ -172,24 +172,6 @@ def make_discovery(storage, sessionkey, component):
     # Helps with debug info
     cur_fname = make_discovery.__name__
 
-    # Yeah, hell! Some shit workaround code here!
-    if component.lower() == 'all':
-        all_components = []
-        for comp in ['disks', 'vdisks', 'controllers']:
-            data = get_all(storage, sessionkey, comp)
-            # print('Data from get_all:\n', data)
-            # print('\n')
-            if comp == 'disks':
-                data_dict = {"{#ALL_DISKS}": data}
-            elif comp == 'vdisks':
-                data_dict = {"{#ALL_VDISKS}": data}
-            elif comp == 'controllers':
-                data_dict = {"{#ALL_CONTROLLERS}": data}
-            else:
-                raise SystemExit("ERROR: Wrong component - '{0}'".format(comp))
-            all_components.append(data_dict)
-        return {"data": all_components}
-
     # Forming URL
     show_url = 'http://{0}/api/show/{1}'.format(storage, component)
 
@@ -336,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
                         metavar='[<IP>|<DNSNAME>]')
-    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'all'],
+    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
                         help='MSA component to monitor or discover',
                         metavar='[disks|vdisks|controllers]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
