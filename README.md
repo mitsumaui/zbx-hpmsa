@@ -1,7 +1,7 @@
 # zbx-hpmsa
 Zabbix module to monitor HP MSA storages via XML API.
-Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api
-Also you can contact me with vk.com: https://vk.com/asand3r
+Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
+Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
 For now it has two major versions - '0.2' and '0.3'. The first one developed for working with Zabbix 3.0-3.2 (maybe lower too, but I didn't check)
 and it must makes two request to HP MSA API to get one value - one for authentication and one for getting data. Unfortunately, there is an important
