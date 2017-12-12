@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import xml.etree.ElementTree as eTree
+from lxml import etree
+from os import path, makedirs, name
+from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
 from json import dumps
 import requests
 
 
-def get_skey(storage, login, password):
+def get_skey(storage, login, password, use_cache=True):
     """
     Get's session key from HP MSA API.
     :param storage:
@@ -16,31 +18,73 @@ def get_skey(storage, login, password):
     String with MSA username.
     :param password:
     String with MSA password.
+    :param use_cache:
+    The function will try to save session key to disk.
     :return:
     Session key as <str> or error code as <str>
     """
 
     # Helps with debug info
     cur_fname = get_skey.__name__
+    logging = True
+    # Determine the path to store cache skey file
+    if name == 'posix':
+        tmp = '/tmp/zbx-hpmsa/'
+    else:
+        tmp = ''
+
+    # Create temp dir if it's not exists
+    if not path.exists(tmp) and tmp != '':
+        try:
+            makedirs(tmp)
+        except FileNotFoundError as e:
+            raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp, exc=e))
+
+    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=storage)
+    log_file = '{temp_dir}zbx-hpmsa_{str}.log'.format(temp_dir=tmp, str=storage)
+
+    # Trying to use cached session key
+    if use_cache is True and path.exists(cache_file):
+        with open(log_file, 'a') as log:
+            cache_alive = datetime.utcnow() - timedelta(minutes=15)
+            cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
+            if logging:
+                log.write("INFO: Cache live time {}\n".format(cache_alive))
+                log.write("INFO: Cache file modified time {}\n".format(cache_file_mtime))
+            if cache_alive < cache_file_mtime:
+                with open(cache_file, 'r') as skey_file:
+                    if logging:
+                        log.write("INFO: Cache is alive. Using it.\n")
+                    cached_skey = skey_file.read()
+                    return cached_skey
+            else:
+                if logging:
+                    log.write("INFO: Cache is dead. Getting new skey.\n")
+                return get_skey(storage, login, password, use_cache=False)
 
     # Combine login and password to 'login_password' format.
     login_data = '_'.join([login, password])
     login_hash = md5(login_data.encode()).hexdigest()
     # Forming URL to get auth token
-    login_url = 'http://{0}/api/login/{1}'.format(storage, login_hash)
+    login_url = 'http://{str}/api/login/{hash}'.format(str=storage, hash=login_hash)
     # Trying to make GET query
     try:
         response = requests.get(login_url)
     except requests.exceptions.ConnectionError:
         raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=login_url))
-    response_xml = eTree.fromstring(response.text)
+    # Processing XML
+    response_xml = etree.fromstring(response.content)
     return_code = response_xml.find(".//PROPERTY[@name='return-code']").text
     response_message = response_xml.find(".//PROPERTY[@name='response']").text
 
-    if return_code == '2':  # 2 - Authentication Unsuccessful, return 2 as <str>
-        return return_code
-    elif return_code == '1':  # 1 - success, return session key
+    # 1 - success, return session key
+    if return_code == '1':
+        with open(cache_file, 'w') as skey_file:
+                skey_file.write(response_message)
         return response_message
+    # 2 - Authentication Unsuccessful, return 2 as <str>
+    elif return_code == '2':
+        return return_code
 
 
 def query_xmlapi(url, sessionkey):
@@ -51,7 +95,7 @@ def query_xmlapi(url, sessionkey):
     :param sessionkey:
     Session key to authorize in <str>.
     :return:
-    Tuple with return code <str>, return description <str> and eTree object <xml.etree.ElementTree.Element>.
+    Tuple with return code <str>, return description <str> and etree object <xml.etree.ElementTree.Element>.
     """
 
     # Helps with debug info
@@ -61,14 +105,22 @@ def query_xmlapi(url, sessionkey):
         response = requests.get(url, headers={'sessionKey': sessionkey})
     except requests.exceptions.ConnectionError:
         raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=url))
+
     # Reading data from server response
-    response_xml = eTree.fromstring(response.text)
-    # Parse result XML to get return code and description
-    return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
-    description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
-    # Placing all data to the tuple which will be returned
-    return_tuple = (return_code, description, response_xml)
-    return return_tuple
+    try:
+        response_xml = etree.fromstring(response.content)
+
+        # Parse result XML to get return code and description
+        return_code = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='return-code']").text
+        description = response_xml.find("./OBJECT[@name='status']/PROPERTY[@name='response']").text
+
+        # Placing all data to the tuple which will be returned
+        return_tuple = (return_code, description, response_xml)
+        return return_tuple
+    except ValueError as e:
+        raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
+    except AttributeError as e:
+        raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
 
 
 def get_value(storage, sessionkey, component, item):
@@ -105,10 +157,10 @@ def get_value(storage, sessionkey, component, item):
         raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
 
     # If return code is not 0 make workaround of authentication problem - just trying one more time
-    if int(resp_return_code) != 0:
+    if resp_return_code != '0':
         attempts = 0
         # Doing two attempts
-        while int(resp_return_code) != 0 and attempts < 3:
+        while resp_return_code != '0' and attempts < 3:
             # Getting new session key
             sessionkey = get_skey(args.msa, args.user, args.password)
             # And making new request to the storage
@@ -116,7 +168,7 @@ def get_value(storage, sessionkey, component, item):
             resp_return_code, resp_description, resp_xml = response
             attempts += 1
 
-        if int(resp_return_code) != 0:
+        if resp_return_code != '0':
             raise SystemExit("ERROR: {rd}".format(rd=resp_description))
 
     # Returns statuses
@@ -183,7 +235,7 @@ def make_discovery(storage, sessionkey, component):
     else:
         raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
 
-    if int(resp_return_code) != 0:
+    if resp_return_code != '0':
         raise SystemExit("ERROR: {0}".format(resp_description))
 
     # Eject XML from response
@@ -237,14 +289,11 @@ def get_all(storage, sessionkey, component):
 
     get_url = 'http://{strg}/api/show/{comp}/'.format(strg=storage, comp=component)
     # Trying to open the url
-    try:
-        response = requests.get(get_url, headers={'sessionKey': sessionkey})
-    except requests.exceptions.ConnectionError:
-        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=get_url))
+    response = query_xmlapi(get_url, sessionkey)
 
-    if response.status_code == 200:
-        # Making XML
-        xml = eTree.fromstring(response.text)
+    # Processing XML if response code 0
+    if response[0] == '0':
+        xml = response[2]
         all_components = {}
         if component == 'disks':
             for PROP in xml.findall("OBJECT[@name='drive']"):
@@ -303,6 +352,9 @@ def get_all(storage, sessionkey, component):
             raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
         # Making JSON with dumps() and return it (separators needs to make JSON compact)
         return dumps(all_components, separators=(',', ':'))
+    else:
+        raise SystemExit("ERROR: ({f}) : Response code from API is {rc} ({rm})".format(f=cur_fname, rc=response[0],
+                                                                                       rm=response[1]))
 
 
 if __name__ == '__main__':
@@ -324,8 +376,8 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
-    # Getting session key and check it
-    skey = get_skey(args.msa, args.user, args.password)
+    # Getting session key
+    skey = get_skey(storage=args.msa, login=args.user, password=args.password, use_cache=True)
 
     if skey != '2':
         # Parsing arguments
