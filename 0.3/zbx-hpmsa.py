@@ -6,14 +6,16 @@ from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
 from json import dumps
-import requests
+from socket import gethostbyname
+from requests import get as req_get
+from requests.exceptions import ConnectionError
 
 
-def get_skey(storage, login, password, use_cache=True):
+def get_skey(str_ip, login, password, use_cache=True):
     """
     Get's session key from HP MSA API.
-    :param storage:
-    String with storage name in DNS or it's IP address.
+    :param str_ip:
+    String with storage IP address.
     :param login:
     String with MSA username.
     :param password:
@@ -26,7 +28,7 @@ def get_skey(storage, login, password, use_cache=True):
 
     # Helps with debug info
     cur_fname = get_skey.__name__
-    logging = True
+
     # Determine the path to store cache skey file
     if name == 'posix':
         tmp = '/tmp/zbx-hpmsa/'
@@ -40,51 +42,50 @@ def get_skey(storage, login, password, use_cache=True):
         except FileNotFoundError as e:
             raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp, exc=e))
 
-    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=storage)
-    log_file = '{temp_dir}zbx-hpmsa_{str}.log'.format(temp_dir=tmp, str=storage)
+    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=str_ip)
 
     # Trying to use cached session key
     if use_cache is True and path.exists(cache_file):
-        with open(log_file, 'a') as log:
-            cache_alive = datetime.utcnow() - timedelta(minutes=15)
-            cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
-            if logging:
-                log.write("INFO: Cache live time {}\n".format(cache_alive))
-                log.write("INFO: Cache file modified time {}\n".format(cache_file_mtime))
-            if cache_alive < cache_file_mtime:
-                with open(cache_file, 'r') as skey_file:
-                    if logging:
-                        log.write("INFO: Cache is alive. Using it.\n")
-                    cached_skey = skey_file.read()
-                    return cached_skey
-            else:
-                if logging:
-                    log.write("INFO: Cache is dead. Getting new skey.\n")
-                return get_skey(storage, login, password, use_cache=False)
+        cache_alive = datetime.utcnow() - timedelta(minutes=15)
+        cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
+        if cache_alive < cache_file_mtime:
+            with open(cache_file, 'r') as skey_file:
+                # cache_content = skey_file.read()
+                # cache = {}
+                # for line in cache_content.split('\n'):
+                #    ctrl_ip, cached_skey = line.split(';')
+                #    cache[ctrl_ip] = cached_skey
+                # if str_ip in cache:
+                #    return cache[str_ip]
+                return skey_file.read()
+        else:
+            return get_skey(str_ip, login, password, use_cache=False)
+    else:
+        # Combine login and password to 'login_password' format.
+        login_data = '_'.join([login, password])
+        login_hash = md5(login_data.encode()).hexdigest()
+        # Forming URL to get auth token
+        login_url = 'http://{str}/api/login/{hash}'.format(str=str_ip, hash=login_hash)
+        # Trying to make GET query
+        try:
+            rsp_content = req_get(login_url).content
 
-    # Combine login and password to 'login_password' format.
-    login_data = '_'.join([login, password])
-    login_hash = md5(login_data.encode()).hexdigest()
-    # Forming URL to get auth token
-    login_url = 'http://{str}/api/login/{hash}'.format(str=storage, hash=login_hash)
-    # Trying to make GET query
-    try:
-        response = requests.get(login_url)
-    except requests.exceptions.ConnectionError:
-        raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=login_url))
-    # Processing XML
-    response_xml = etree.fromstring(response.content)
-    return_code = response_xml.find(".//PROPERTY[@name='return-code']").text
-    response_message = response_xml.find(".//PROPERTY[@name='response']").text
+            # Processing XML
+            xml_data = etree.fromstring(rsp_content)
+            return_code = xml_data.find(".//PROPERTY[@name='return-code']").text
+            response_message = xml_data.find(".//PROPERTY[@name='response']").text
 
-    # 1 - success, return session key
-    if return_code == '1':
-        with open(cache_file, 'w') as skey_file:
-                skey_file.write(response_message)
-        return response_message
-    # 2 - Authentication Unsuccessful, return 2 as <str>
-    elif return_code == '2':
-        return return_code
+            # 1 - success, return session key
+            if return_code == '1':
+                with open(cache_file, 'w') as skey_file:
+                    # skey_file.write("{ip};{skey}".format(ip=str_ip, skey=response_message))
+                    skey_file.write("{skey}".format(skey=response_message))
+                return response_message
+            # 2 - Authentication Unsuccessful, return 2 as <str>
+            elif return_code == '2':
+                return return_code
+        except ConnectionError:
+            raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=login_url))
 
 
 def query_xmlapi(url, sessionkey):
@@ -102,8 +103,8 @@ def query_xmlapi(url, sessionkey):
     cur_fname = query_xmlapi.__name__
 
     try:
-        response = requests.get(url, headers={'sessionKey': sessionkey})
-    except requests.exceptions.ConnectionError:
+        response = req_get(url, headers={'sessionKey': sessionkey})
+    except ConnectionError:
         raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=url))
 
     # Reading data from server response
@@ -376,8 +377,10 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
+    # Define MSA Controller IP address (useful, if we have 2-ctrl configuration)
+    msa_ip = gethostbyname(args.msa)
     # Getting session key
-    skey = get_skey(storage=args.msa, login=args.user, password=args.password, use_cache=True)
+    skey = get_skey(str_ip=msa_ip, login=args.user, password=args.password, use_cache=True)
 
     if skey != '2':
         # Parsing arguments
@@ -387,12 +390,12 @@ if __name__ == '__main__':
 
         # If gets '--discovery' argument, make discovery
         elif args.discovery is True:
-            print(make_discovery(args.msa, skey, args.component))
+            print(make_discovery(msa_ip, skey, args.component))
         # If gets '--get' argument, getting value of component
         elif args.get is not None and len(args.get) != 0 and args.get != 'all':
-            print(get_value(args.msa, skey, args.component, args.get))
+            print(get_value(msa_ip, skey, args.component, args.get))
         elif args.get == 'all':
-            print(get_all(args.msa, skey, args.component))
+            print(get_all(msa_ip, skey, args.component))
         else:
             raise SystemExit("Syntax error: You must use '--discovery' or '--get' option anyway.")
     else:
