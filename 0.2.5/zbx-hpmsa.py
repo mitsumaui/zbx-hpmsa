@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import xml.etree.ElementTree as eTree
+from socket import gethostbyname
 from sys import exc_info
 from hashlib import md5
 from urllib import request
@@ -115,21 +116,6 @@ def get_value(storage, sessionkey, component, item):
         resp_return_code, resp_description, resp_xml = response
     else:
         raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
-
-    # If return code is not 0 make workaround of authentication problem - just trying one more time
-    if int(resp_return_code) != 0:
-        attempts = 0
-        # Doing two attempts
-        while int(resp_return_code) != 0 and attempts < 3:
-            # Getting new session key
-            sessionkey = get_skey(args.msa, args.user, args.password)
-            # And making new request to the storage
-            response = make_httpreq(get_url, sessionkey)
-            resp_return_code, resp_description, resp_xml = response
-            attempts += 1
-
-        if int(resp_return_code) != 0:
-            raise SystemExit("ERROR: {0}".format(resp_description))
 
     # Returns statuses
     # vsisks
@@ -247,8 +233,10 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just show program version')
     args = parser.parse_args()
 
+    # Determine MSA IP by hostname
+    msa_ip = gethostbyname(args.msa)
     # Getting session key and check it
-    skey = get_skey(args.msa, args.user, args.password)
+    skey = get_skey(msa_ip, args.user, args.password)
     if skey != '2':
         # Parsing arguments
         # Make no possible to use '-d' and '-g' options together
@@ -257,11 +245,11 @@ if __name__ == '__main__':
 
         # If gets '--discovery' argument, make discovery
         elif args.discovery is True:
-            print(make_discovery(args.msa, skey, args.component))
+            print(make_discovery(msa_ip, skey, args.component))
 
         # If gets '--get' argument, getting value of component
         elif args.get is not None and len(args.get) != 0:
-            print(get_value(args.msa, skey, args.component, args.get))
+            print(get_value(msa_ip, skey, args.component, args.get))
         else:
             raise SystemExit("Usage Error: You must use '--discovery' or '--get' option anyway.")
     else:
