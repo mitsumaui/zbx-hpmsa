@@ -32,15 +32,15 @@ def get_skey(storage, login, password, use_cache=True):
     # Determine the path to store cache skey file
     if name == 'posix':
         tmp = '/tmp/zbx-hpmsa/'
+        # Create temp dir if it's not exists
+        if not path.exists(tmp):
+            try:
+                makedirs(tmp)
+            except FileNotFoundError as e:
+                raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp,exc=e))
     else:
         tmp = ''
 
-    # Create temp dir if it's not exists
-    if not path.exists(tmp) and tmp != '':
-        try:
-            makedirs(tmp)
-        except FileNotFoundError as e:
-            raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp, exc=e))
     # Cache file name
     cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=storage)
 
@@ -50,6 +50,7 @@ def get_skey(storage, login, password, use_cache=True):
         cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
+                # try-except !!! os.access(file, os.R_OK) R_OK = 4
                 return skey_file.read()
         else:
             return get_skey(storage, login, password, use_cache=False)
@@ -363,14 +364,14 @@ if __name__ == '__main__':
 
     if skey != '2':
         # Make no possible to use '--discovery' and '--get' options together
-        if args.discovery is True and args.get is not None:
-            raise SystemExit("ERROR: You cannot use both '--discovery' and '--get' options.")
+        if args.discovery and args.get:
+            raise SystemExit("Syntax error: You cannot use both '--discovery' and '--get' options.")
 
         # If gets '--discovery' argument, make discovery
-        elif args.discovery is True:
+        elif args.discovery:
             print(make_discovery(msa_ip, skey, args.component))
         # If gets '--get' argument, getting component's health
-        elif args.get is not None and len(args.get) != 0 and args.get != 'all':
+        elif args.get and args.get != 'all':
             print(get_health(msa_ip, skey, args.component, args.get))
         # Making bulk request for all possible component statuses
         elif args.get == 'all':
