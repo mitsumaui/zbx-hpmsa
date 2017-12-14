@@ -1,5 +1,5 @@
 # zbx-hpmsa
-Zabbix module to monitor HP MSA storages via XML API.
+Zabbix module to monitor HP MSA storages via XML API.  
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
@@ -23,14 +23,14 @@ Low Level Discovery:
  - [x] physical disks 
  - [x] virtual disks
  - [x] controllers
+ - [x] Enclosures
 
 Component status:
  - [x] physical disks 
  - [x] virtual disks
  - [x] controllers
+ - [x] Enclosures
  
- **TODO**
- - [ ] Enclosures monitoring
  
  ## Version 0.3 (dev)
  Version 0.3 get all features that 0.2 has. Also it has the same arguments and can be use like 0.2, but now you must install 'requests' library first.  
@@ -63,12 +63,12 @@ has default user with default password - 'monitor'/'!monitor', but if it isn't t
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all --user FOO --password BAR
 ```
-Template will works both in 0.2 and 0.3 versions, also I'll add template with dependent items soon.
-Have fun and rate it on share.zabbix.com if you like it. =)
+Template will works both in 0.2 and 0.3 versions, also I'll add template with dependent items as soon as posible.  
+Have fun and rate it on [share.zabbix.com](https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api) if you like it. =)
 
 **Tested with**:  
 HP MSA 2040
 
 **Known Issues**:
 - Sometimes appears the error "The user is not recognized on this system" though username and password are correct.
-  - Think I've fixed it in 0.2.5.1. But it's may be not exactly. =) The 0.3 version shouldn't has this problem by design.
+  - Think I've fixed it in 0.2.5.2 and higher.
