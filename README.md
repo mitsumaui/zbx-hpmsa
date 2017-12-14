@@ -33,9 +33,10 @@ Component status:
  
  
  ## Version 0.3 (dev)
- Version 0.3 get all features that 0.2 has. Also it has the same arguments and can be use like 0.2, but now you must install 'requests' library first.  
+ Version 0.3 get all features that v0.2 has. Also it has the same arguments and can be use like v0.2, but now you must install 'requests' library first. Also, as experiment I'm using 'lxml' instead default 'xml' from standard Python library, so you should intstall it too for now.  
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Enclosures monitoring
+ - [x] Session key cache (MSA login cache)
 
 ## Usage
 - Both 0.2 and 0.3 versions has LLD of controllers, vdisks and disks:
