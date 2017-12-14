@@ -38,6 +38,8 @@ Enables discovery mode.
 Sets component to request.  
 **-g|--get**  
 Sets component item to request.
+**-v|--version**
+Prints script version and exit.  
 
 ## Usage
 - LLD of enclosures, controllers, virtual disks and physical disks:
