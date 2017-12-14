@@ -2,7 +2,8 @@
 ## The version is still develops, but you can try it now - common functionality already works.
 This version developed special for using with Zabbix 3.4 and it has great new functionality - dependent items.  
 Besides of many code correction we have two most important changes:
-1. Now zbx-hpmsa depends of 'requests' library. I have to used it because of can't force urllib works with huge XML response (I know, it's my problem, but nothing can do with it);
+1. Now zbx-hpmsa depends of 'requests' library. I have to used it because of can't force urllib works with huge XML response (I know, it's my problem, but nothing can do with it);  
+2. Added login cache. It's files stored in /tmp/zbx-hpmsa if you are using POSIX compatible OS and in script directory if not.  
 2. Now we have 'all' argument of '--get' parameter. If you set it like this:
 ```bash
 [asand3r@pc ~]$ ./zbx-hpmsa.py --msa san-001.example.com --component disks --get all
