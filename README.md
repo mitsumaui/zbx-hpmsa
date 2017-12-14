@@ -44,7 +44,7 @@ Component status:
 
 {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
 ```
-- Also, they can request health status of one component. E.g. disk 1.1:
+- Request health status of one component. E.g. disk 1.1:
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get 1.1
 
