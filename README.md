@@ -45,16 +45,18 @@ Sets component item to request.
 
 {"data":[{"{#VDISKNAME}":"vDisk01"},{"{#VDISKNAME}":"vDisk02"}]}
 ```
-- Request health status of one component. E.g. disk 1.1:
+- Request health status of one component. E.g. disk '1.1':
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get 1.1
 
 OK
 ```
-- Version 0.3 can make bulk request to get all available data:
+- Bulk request to get all available data. E.g. all disks or controller 'A':
 ```bash
 [user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component disks --get all
 {"1.1":{"health":"OK","temperature":"25","work_hours":"21170"},"1.2":{"health":"OK","temperature":"24","work_hours":"21168"}, ...}
+[user@server ~] # ./zbx-hpmsa.py --msa MSA-NAME-OR-IP --component controllers --get all
+{"A":{"health":"OK","cf_health":"OK","ports":{"A1":{"health":"OK","status":"Up","sfp_status":"OK"},"A2":{"health":"OK","status":"Up","sfp_status":"OK"},"A3":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"},"A4":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"}}},"B":{"health":"OK","cf_health":"OK","ports":{"B1":{"health":"OK","status":"Up","sfp_status":"OK"},"B2":{"health":"OK","status":"Up","sfp_status":"OK"},"B3":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"},"B4":{"health":"N/A","status":"Disconnected","sfp_status":"Not present"}}}}
 ```
 
 ## Zabbix templates
