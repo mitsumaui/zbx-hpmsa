@@ -94,6 +94,7 @@ def query_xmlapi(url, sessionkey):
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
 
+    # Makes GET request to URL
     try:
         response = req_get(url, headers={'sessionKey': sessionkey})
     except ConnectionError:
@@ -116,7 +117,7 @@ def query_xmlapi(url, sessionkey):
         raise SystemExit("ERROR: {f} : Cannot parse XML. {exc}".format(f=cur_fname, exc=e))
 
 
-def get_value(storage, sessionkey, component, item):
+def get_health(storage, sessionkey, component, item):
     """
     The function gets single item of MSA component. E.g. - status of one disk. It may be useful for Zabbix < 3.4.
     :param storage:
@@ -132,12 +133,12 @@ def get_value(storage, sessionkey, component, item):
     """
 
     # Helps with forming debug info
-    cur_fname = get_value.__name__
+    cur_fname = get_health.__name__
 
     # Forming URL
-    if component.lower() in ('vdisks', 'disks'):
+    if component in ('vdisks', 'disks'):
         get_url = 'http://{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    elif component.lower() in ('controllers', 'enclosures'):
+    elif component in ('controllers', 'enclosures'):
         get_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
@@ -150,73 +151,31 @@ def get_value(storage, sessionkey, component, item):
     else:
         raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
 
-    # If return code is not 0 make workaround of authentication problem - just trying one more time
-    if resp_return_code != '0':
-        attempts = 0
-        # Doing two attempts
-        while resp_return_code != '0' and attempts < 3:
-            # Getting new session key
-            sessionkey = get_skey(args.msa, args.user, args.password)
-            # And making new request to the storage
-            response = query_xmlapi(get_url, sessionkey)
-            resp_return_code, resp_description, resp_xml = response
-            attempts += 1
-
-        if resp_return_code != '0':
-            raise SystemExit("ERROR: {rd}".format(rd=resp_description))
-
-    # Returns statuses
-    # vdisks
-    if component.lower() == 'vdisks':
-        vdisk_health = resp_xml.find("./OBJECT[@name='virtual-disk']/PROPERTY[@name='health']").text
-        if len(vdisk_health) != 0:
-            return vdisk_health
-        else:
-            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
-    # disks
-    elif component.lower() == 'disks':
-        disk_health = resp_xml.find("./OBJECT[@name='drive']/PROPERTY[@name='health']").text
-        if len(disk_health) != 1:
-            return disk_health
-        else:
-            return "ERROR: ({f}) response handle error.".format(f=cur_fname)
-    # controllers
-    elif component.lower() == 'controllers':
-        # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status, only all of them
+    # Matching dict
+    md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
+    # Returns health statuses
+    # disks and vdisks
+    if component in ('vdisks', 'disks'):
+        try:
+            health = resp_xml.find("./OBJECT[@name='{nd}']/PROPERTY[@name='health']".format(nd=md[component])).text
+        except AttributeError:
+            raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
+    # controllers and enclosures
+    elif component in ('controllers', 'enclosures'):
+        # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
         health_dict = {}
-        for ctrl in resp_xml.findall("./OBJECT[@name='controllers']"):
-            # If length of item eq 1 symbols - it should be ID
-            if len(item) == 1:
-                ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
-            # serial number, I think. Maybe I should add possibility to search controller by IP?..
-            else:
-                ctrl_id = ctrl.find("./PROPERTY[@name='serial-number']").text
-            ctrl_health = ctrl.find("./PROPERTY[@name='health']").text
-            health_dict[ctrl_id] = ctrl_health
+        for ctrl in resp_xml.findall("./OBJECT[@name='{comp}']".format(comp=component)):
+            ctrl_id = ctrl.find("./PROPERTY[@name='{nd}']".format(nd=md[component])).text
+            # Add 'health' to dict
+            health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health']").text
         # If given item presents in our dict - return status
         if item in health_dict:
-            return health_dict[item]
+            health = health_dict[item]
         else:
-            return "ERROR: No such controller '{item}'. Found only these: {hd}".format(item=item, hd=health_dict)
-    elif component.lower() == 'enclosures':
-        health_dict = {}
-        for encl in resp_xml.findall("./OBJECT[@name='enclosures']"):
-            # If length of item eq 1 symbols - it should be ID
-            if len(item) == 1:
-                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
-            # serial number, I think.
-            else:
-                encl_id = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-            encl_health = encl.find("./PROPERTY[@name='health']").text
-            health_dict[encl_id] = encl_health
-            # If given item presents in our dict - return status
-        if item in health_dict:
-            return health_dict[item]
-        else:
-            return "ERROR: No such enclosure '{item}'. Found only these: {hd}".format(item=item, hd=health_dict)
-    # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
+            raise SystemExit("ERROR: No such id: '{item}'.".format(item=item))
     else:
-        return 'Wrong component: {comp}'.format(comp=component)
+        raise SystemExit("ERROR: Wrong component '{comp}'".format(comp=component))
+    return health
 
 
 def make_discovery(storage, sessionkey, component):
@@ -381,14 +340,14 @@ if __name__ == '__main__':
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
-    parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|<ENCLOSUREID>|<ENCLOSURESN>|all')
+    parser.add_argument('-g', '--get', type=str, help='ID of MSA part which status we want to get',
+                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<ENCLOSUREID>|all')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
                         metavar='[<IP>|<DNSNAME>]')
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
-                        help='MSA component to monitor or discover',
+                        help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
@@ -397,22 +356,23 @@ if __name__ == '__main__':
     if args.msa:
         msa_ip = gethostbyname(args.msa)
     else:
-        raise SystemExit("ERROR: Missed mandatory argument '--msa'.")
+        raise SystemExit("ERROR: Missed mandatory argument '-m|--msa'.")
+
     # Getting session key
     skey = get_skey(storage=msa_ip, login=args.user, password=args.password, use_cache=True)
 
     if skey != '2':
-        # Parsing arguments
-        # Make no possible to use '-d' and '-g' options together
+        # Make no possible to use '--discovery' and '--get' options together
         if args.discovery is True and args.get is not None:
             raise SystemExit("ERROR: You cannot use both '--discovery' and '--get' options.")
 
         # If gets '--discovery' argument, make discovery
         elif args.discovery is True:
             print(make_discovery(msa_ip, skey, args.component))
-        # If gets '--get' argument, getting value of component
+        # If gets '--get' argument, getting component's health
         elif args.get is not None and len(args.get) != 0 and args.get != 'all':
-            print(get_value(msa_ip, skey, args.component, args.get))
+            print(get_health(msa_ip, skey, args.component, args.get))
+        # Making bulk request for all possible component statuses
         elif args.get == 'all':
             print(get_all(msa_ip, skey, args.component))
         else:
