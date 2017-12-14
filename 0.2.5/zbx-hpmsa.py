@@ -105,7 +105,7 @@ def get_value(storage, sessionkey, component, item):
     # Forming URL
     if component in ['vdisks', 'disks']:
         get_url = 'http://{0}/api/show/{1}/{2}'.format(storage, component, item)
-    elif component == 'controllers':
+    elif component in ('controllers', 'enclosures'):
         get_url = 'http://{0}/api/show/{1}'.format(storage, component)
     else:
         raise SystemExit('ERROR: Wrong component "{0}"'.format(component))
@@ -150,6 +150,22 @@ def get_value(storage, sessionkey, component, item):
             return health_dict[item]
         else:
             return 'ERROR: No such controller ({0}). Found only these: {1}'.format(item, health_dict)
+    elif component.lower() == 'enclosures':
+        health_dict = {}
+        for encl in resp_xml.findall("./OBJECT[@name='enclosures']"):
+            # If length of item eq 1 symbols - it should be ID
+            if len(item) == 1:
+                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
+            # serial number, I think.
+            else:
+                encl_id = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+            encl_health = encl.find("./PROPERTY[@name='health']").text
+            health_dict[encl_id] = encl_health
+            # If given item presents in our dict - return status
+        if item in health_dict:
+            return health_dict[item]
+        else:
+            return "ERROR: No such enclosure '{item}'. Found only these: {hd}".format(item=item, hd=health_dict)
     # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
     else:
         return 'Wrong component: {cmp}'.format(cmp=component)
@@ -208,28 +224,35 @@ def make_discovery(storage, sessionkey, component):
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
                 all_components.append(ctrl_dict)
+        elif component.lower() == 'enclosures':
+            for encl in resp_xml.findall(".OBJECT[@name='enclosures']"):
+                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
+                encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+                encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
+                             "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
+                all_components.append(encl_dict)
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+        SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers, enclosures)')
 
 
 if __name__ == '__main__':
     # Current program version
-    VERSION = '0.2.5.2'
+    VERSION = '0.2.5.3'
 
     # Parse all given arguments
     parser = ArgumentParser(description='Zabbix module for MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID|VDISKNAME|CONTROLLERID|CONTROLLERSN>')
+                        metavar='<DISKID|VDISKNAME|CONTROLLERID|CONTROLLERSN>|<ENCLOSUREID>|<ENCLOSURESN>')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
                         metavar='<IP> or <DNSNAME>')
-    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
+    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component to monitor',
-                        metavar='<disks>,<vdisks>,<controllers>')
+                        metavar='<disks>,<vdisks>,<controllers>,<enclosures>')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Just show program version')
     args = parser.parse_args()
 

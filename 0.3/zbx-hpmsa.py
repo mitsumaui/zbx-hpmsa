@@ -11,10 +11,10 @@ from requests import get as req_get
 from requests.exceptions import ConnectionError
 
 
-def get_skey(str_ip, login, password, use_cache=True):
+def get_skey(storage, login, password, use_cache=True):
     """
     Get's session key from HP MSA API.
-    :param str_ip:
+    :param storage:
     String with storage IP address.
     :param login:
     String with MSA username.
@@ -41,8 +41,8 @@ def get_skey(str_ip, login, password, use_cache=True):
             makedirs(tmp)
         except FileNotFoundError as e:
             raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp, exc=e))
-
-    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=str_ip)
+    # Cache file name
+    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=storage)
 
     # Trying to use cached session key
     if use_cache is True and path.exists(cache_file):
@@ -50,22 +50,15 @@ def get_skey(str_ip, login, password, use_cache=True):
         cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
-                # cache_content = skey_file.read()
-                # cache = {}
-                # for line in cache_content.split('\n'):
-                #    ctrl_ip, cached_skey = line.split(';')
-                #    cache[ctrl_ip] = cached_skey
-                # if str_ip in cache:
-                #    return cache[str_ip]
                 return skey_file.read()
         else:
-            return get_skey(str_ip, login, password, use_cache=False)
+            return get_skey(storage, login, password, use_cache=False)
     else:
         # Combine login and password to 'login_password' format.
         login_data = '_'.join([login, password])
         login_hash = md5(login_data.encode()).hexdigest()
         # Forming URL to get auth token
-        login_url = 'http://{str}/api/login/{hash}'.format(str=str_ip, hash=login_hash)
+        login_url = 'http://{str}/api/login/{hash}'.format(str=storage, hash=login_hash)
         # Trying to make GET query
         try:
             rsp_content = req_get(login_url).content
@@ -78,7 +71,6 @@ def get_skey(str_ip, login, password, use_cache=True):
             # 1 - success, return session key
             if return_code == '1':
                 with open(cache_file, 'w') as skey_file:
-                    # skey_file.write("{ip};{skey}".format(ip=str_ip, skey=response_message))
                     skey_file.write("{skey}".format(skey=response_message))
                 return response_message
             # 2 - Authentication Unsuccessful, return 2 as <str>
@@ -145,7 +137,7 @@ def get_value(storage, sessionkey, component, item):
     # Forming URL
     if component.lower() in ('vdisks', 'disks'):
         get_url = 'http://{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    elif component.lower() == 'controllers':
+    elif component.lower() in ('controllers', 'enclosures'):
         get_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
@@ -204,7 +196,23 @@ def get_value(storage, sessionkey, component, item):
         if item in health_dict:
             return health_dict[item]
         else:
-            return 'ERROR: No such controller ({item}). Found only these: {hd}'.format(item=item, hd=health_dict)
+            return "ERROR: No such controller '{item}'. Found only these: {hd}".format(item=item, hd=health_dict)
+    elif component.lower() == 'enclosures':
+        health_dict = {}
+        for encl in resp_xml.findall("./OBJECT[@name='enclosures']"):
+            # If length of item eq 1 symbols - it should be ID
+            if len(item) == 1:
+                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
+            # serial number, I think.
+            else:
+                encl_id = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+            encl_health = encl.find("./PROPERTY[@name='health']").text
+            health_dict[encl_id] = encl_health
+            # If given item presents in our dict - return status
+        if item in health_dict:
+            return health_dict[item]
+        else:
+            return "ERROR: No such enclosure '{item}'. Found only these: {hd}".format(item=item, hd=health_dict)
     # I know, we can't get anything else because of using 'choices' in argparse, but why not return something?..
     else:
         return 'Wrong component: {comp}'.format(comp=component)
@@ -226,7 +234,7 @@ def make_discovery(storage, sessionkey, component):
     cur_fname = make_discovery.__name__
 
     # Forming URL
-    show_url = 'http://{0}/api/show/{1}'.format(storage, component)
+    show_url = 'http://{strg}/api/show/{comp}'.format(strg=storage, comp=component)
 
     # Making HTTP request to pull needed data
     response = query_xmlapi(show_url, sessionkey)
@@ -234,10 +242,10 @@ def make_discovery(storage, sessionkey, component):
     if len(response) == 3:
         resp_return_code, resp_description, resp_xml = response
     else:
-        raise SystemExit("ERROR: ({0}) XML handle error".format(cur_fname))
+        raise SystemExit("ERROR: ({f}) XML handle error".format(f=cur_fname))
 
     if resp_return_code != '0':
-        raise SystemExit("ERROR: {0}".format(resp_description))
+        raise SystemExit("ERROR: {rd}".format(rd=resp_description))
 
     # Eject XML from response
     if component is not None or len(component) != 0:
@@ -263,10 +271,17 @@ def make_discovery(storage, sessionkey, component):
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
                              "{#CTRLIP}": "{ip}".format(ip=ctrl_ip)}
                 all_components.append(ctrl_dict)
+        elif component.lower() == 'enclosures':
+            for encl in resp_xml.findall(".OBJECT[@name='enclosures']"):
+                encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
+                encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
+                encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
+                             "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
+                all_components.append(encl_dict)
         to_json = {"data": all_components}
         return dumps(to_json, separators=(',', ':'))
     else:
-        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers)')
+        raise SystemExit('ERROR: You should provide the storage component (vdisks, disks, controllers, enclosures)')
 
 
 def get_all(storage, sessionkey, component):
@@ -366,21 +381,21 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Zabbix module for HP MSA XML API.', add_help=True)
     parser.add_argument('-d', '--discovery', action='store_true')
     parser.add_argument('-g', '--get', type=str, help='ID of part which status we want to get',
-                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|all')
+                        metavar='<DISKID>|<VDISKNAME>|<CONTROLLERID>|<CONTROLLERSN>|<ENCLOSUREID>|<ENCLOSURESN>|all')
     parser.add_argument('-u', '--user', default='monitor', type=str, help='User name to login in MSA')
     parser.add_argument('-p', '--password', default='!monitor', type=str, help='Password for your user')
     parser.add_argument('-m', '--msa', type=str, help='DNS name or IP address of your MSA controller',
                         metavar='[<IP>|<DNSNAME>]')
-    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers'],
+    parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component to monitor or discover',
-                        metavar='[disks|vdisks|controllers]')
+                        metavar='[disks|vdisks|controllers|enclosures]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
     # Define MSA Controller IP address (useful, if we have 2-ctrl configuration)
     msa_ip = gethostbyname(args.msa)
     # Getting session key
-    skey = get_skey(str_ip=msa_ip, login=args.user, password=args.password, use_cache=True)
+    skey = get_skey(storage=msa_ip, login=args.user, password=args.password, use_cache=True)
 
     if skey != '2':
         # Parsing arguments
