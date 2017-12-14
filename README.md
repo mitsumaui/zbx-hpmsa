@@ -1,22 +1,21 @@
 # zbx-hpmsa
-Zabbix module to monitor HP MSA storages via XML API.  
+Zabbix module for monitor HPE MSA storages via XML API.  
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
-For now it has two major versions - '0.2' and '0.3'. The first one developed for working with Zabbix 3.0-3.2 (maybe lower too, but I didn't check)
-and it must makes two request to HP MSA API to get one value - one for authentication and one for getting data. Unfortunately, there is an important
-limitation in that mechanism - we cannot get more metrics than one or two per HP MSA component without crashing the API. E.g. to get health status of
-one disk you should make two requests. Let's suppose, you want to get temperature for the same disk too - it's plus two more requests to API.
-Now, multiply it for 24 disks and feel the problem. People uses something like 'cache' as workaround - get all possible data with one request and put it
-to a file, where from they send data to Zabbix. Luckily for me, when I found this problem Zabbix 3.4 has been released. =) So, I've developed new version
-using [dependent items](https://www.zabbix.com/documentation/3.4/manual/config/items/itemtypes/dependent_items) functionality.
+**Latest stable version:** 0.3
 
-## Version 0.2
-zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
-Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry) and doesn't depends of any external library.
+## Dependencies
+ - requests
+ - lxml (experimental, may be replaced with 'xml' from Python stdlib)
 
-**Latest stable version:** 0.2.5.3
-
+zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.  
+Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
+Version 0.3 get same interface like v0.2, so it's compatible by arguments. Also it has the same arguments and can be use like v0.2, but now you must install 'requests' library first. Also, as experiment I'm using 'lxml' instead default 'xml' from standard Python library, so you should intstall it too for now.  
+ - [x] Bulk requests for dependent items of Zabbix 3.4
+ - [x] Enclosures monitoring
+ - [x] Session key cache (MSA login cache)
+ 
 **Feautres**
 
 Low Level Discovery:
@@ -30,13 +29,6 @@ Component status:
  - [x] virtual disks
  - [x] controllers
  - [x] Enclosures
- 
- 
- ## Version 0.3 (dev)
- Version 0.3 get all features that v0.2 has. Also it has the same arguments and can be use like v0.2, but now you must install 'requests' library first. Also, as experiment I'm using 'lxml' instead default 'xml' from standard Python library, so you should intstall it too for now.  
- - [x] Bulk requests for dependent items of Zabbix 3.4
- - [x] Enclosures monitoring
- - [x] Session key cache (MSA login cache)
 
 ## Usage
 - Both 0.2 and 0.3 versions has LLD of controllers, vdisks and disks:
