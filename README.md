@@ -11,7 +11,7 @@ Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't
  - requests
  - lxml (experimental, may be replaced with 'xml' from Python stdlib)
 
-**Feautres**
+**Feautres**  
 Common:
  - [x] Bulk requests for dependent items of Zabbix 3.4
  - [x] Session key cache (MSA login cache)
