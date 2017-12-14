@@ -32,6 +32,10 @@ Component status:
 ## Supported arguments  
 **-m|--msa**  
 HPE MSA DNS name or IP address.  
+**-u|--user**  
+Sets MSA username  
+**-p|--password**  
+Sets password for MSA user  
 **-d|--discovery**  
 Enables discovery mode.  
 **-c|--component**  
