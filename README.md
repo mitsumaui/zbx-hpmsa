@@ -28,6 +28,16 @@ Component status:
  - [x] controllers
  - [x] Enclosures
 
+## Supported arguments  
+**-m|--msa**  
+HPE MSA DNS name or IP address.  
+**-d|--discovery**  
+Enables discovery mode.  
+**-c|--component**  
+Sets component to request.  
+**-g|--get**  
+Sets component item to request.
+
 ## Usage
 - LLD of enclosures, controllers, virtual disks and physical disks:
 ```bash
