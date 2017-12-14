@@ -144,6 +144,7 @@ def get_value(storage, sessionkey, component, item):
 
     # Making HTTP request with last formed URL and session key from get_skey()
     response = query_xmlapi(get_url, sessionkey)
+
     if len(response) == 3:
         resp_return_code, resp_description, resp_xml = response
     else:
@@ -393,7 +394,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Define MSA Controller IP address (useful, if we have 2-ctrl configuration)
-    msa_ip = gethostbyname(args.msa)
+    if args.msa:
+        msa_ip = gethostbyname(args.msa)
+    else:
+        raise SystemExit("ERROR: Missed mandatory argument '--msa'.")
     # Getting session key
     skey = get_skey(storage=msa_ip, login=args.user, password=args.password, use_cache=True)
 
