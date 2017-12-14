@@ -37,8 +37,8 @@ Enables discovery mode.
 **-c|--component**  
 Sets component to request.  
 **-g|--get**  
-Sets component item to request.
-**-v|--version**
+Sets component item to request.  
+**-v|--version**  
 Prints script version and exit.  
 
 ## Usage
