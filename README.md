@@ -5,7 +5,6 @@ Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand
 
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.  
 Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
-Version 0.3 get same interface like v0.2, so it's compatible by arguments. Also it has the same arguments and can be use like v0.2, but now you must install 'requests' library first. Also, as experiment I'm using 'lxml' instead default 'xml' from standard Python library, so you should intstall it too for now.  
 **Latest stable version:** 0.3
 
 ## Dependencies
