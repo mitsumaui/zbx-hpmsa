@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>3.4</version>
+    <date>2017-12-14T07:53:13Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>RGr Template HP MSA 2040</template>
+            <name>RGr Template HP MSA 2040</name>
+            <description>Discover all virtual and physical disks on HP MSA 2040 by using XML API.</description>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>MSA Controllers</name>
+                </application>
+                <application>
+                    <name>MSA Enclosures</name>
+                </application>
+                <application>
+                    <name>MSA Physical Disks</name>
+                </application>
+                <application>
+                    <name>MSA Virtual Disks</name>
+                </application>
+            </applications>
+            <items/>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>Controllers discovery</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;]</key>
+                    <delay>3h</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>1d</lifetime>
+                    <description>Makes discovery of all controllers on SAN.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Controller {#CTRLID} IP {#CTRLIP} ping check</name>
+                            <type>3</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>icmpping[{#CTRLIP},2]</key>
+                            <delay>1m</delay>
+                            <history>7d</history>
+                            <trends>180d</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Controller {#CTRLID} ICMP ping check with IP {#CTRLIP}.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Controllers</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Web interface status on {#CTRLID}</name>
+                            <type>3</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>net.tcp.service[http,{#CTRLIP},80]</key>
+                            <delay>1m</delay>
+                            <history>7d</history>
+                            <trends>180d</trends>
+                            <status>0</status>
+                            <value_type>3</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Проверка доступности 80 порта на контроллере {#CTRLID}.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Controllers</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>Controller {#CTRLID} health status</name>
+                            <type>10</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;]</key>
+                            <delay>1m</delay>
+                            <history>7d</history>
+                            <trends>0</trends>
+                            <status>0</status>
+                            <value_type>1</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Controller {#CTRLID} with SN {#CTRLSN} and IP {#CTRLIP} status.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Controllers</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Controller {#CTRLID} health status is not OK</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>2</priority>
+                            <description>Controller {#CTRLID} with SN {#CTRLSN} and IP {#CTRLIP } health status is {ITEM.LASTVALUE}.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies/>
+                            <tags>
+                                <tag>
+                                    <tag>msa controller health</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Controller {#CTRLID} ping failed</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>2</priority>
+                            <description>Нет ответа от контроллера {#CTRLID} на ping.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies/>
+                            <tags>
+                                <tag>
+                                    <tag>icmp_ping</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:net.tcp.service[http,{#CTRLIP},80].count(#5,1,ne)}&gt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Web interface on controller {#CTRLID} ({#CTRLIP}) is down</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>1</priority>
+                            <description>Не удалось подключиться к 80 порту по TCP.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies>
+                                <dependency>
+                                    <name>Controller {#CTRLID} ping failed</name>
+                                    <expression>{RGr Template HP MSA 2040:icmpping[{#CTRLIP},2].count(#5,1,ne)}&gt;3</expression>
+                                    <recovery_expression/>
+                                </dependency>
+                            </dependencies>
+                            <tags>
+                                <tag>
+                                    <tag>80 tcp</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Physical disks discovery</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;]</key>
+                    <delay>3h</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>1d</lifetime>
+                    <description>Makes discovery of all physical disks on SAN.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Physical Diks in slot {#DISKLOCATION} Status</name>
+                            <type>10</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;]</key>
+                            <delay>5m</delay>
+                            <history>7d</history>
+                            <trends>0</trends>
+                            <status>0</status>
+                            <value_type>1</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Status of physical disk in slot {#DISKLOCATION} with SN {#DISKSN}.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Physical Disks</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Physical Disk in slot {#DISKLOCATION} is not OK</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>1</priority>
+                            <description>Physical disk in slot {#DISKLOCATION} with SN {#DISKSN} has status {ITEM.LASTVALUE}.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies/>
+                            <tags>
+                                <tag>
+                                    <tag>hdd</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Enclosures discovery</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;]</key>
+                    <delay>3h</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>1d</lifetime>
+                    <description>Makes discovery of all enclosures on SAN.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Enclosure {#ENCLOSUREID} health status</name>
+                            <type>10</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;]</key>
+                            <delay>1m</delay>
+                            <history>7d</history>
+                            <trends>0</trends>
+                            <status>0</status>
+                            <value_type>1</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Enclosure {#ENCLOSUREID} with SN {#ENCLOSURESN} health status.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Enclosures</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Enclosure {#ENCLOSUREID} health status is not OK</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>2</priority>
+                            <description>Enclosure {#ENCLOSUREID} with SN {#ENCLOSURESN} health status is {ITEM.LASTVALUE}.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies/>
+                            <tags>
+                                <tag>
+                                    <tag>msa enclosure health</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>Virtual disks discovery</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zbx-hpmsa.py[&quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;]</key>
+                    <delay>3h</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>1d</lifetime>
+                    <description>Makes discovery of all virtual disks on SAN.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Virtual Diks {#VDISKNAME} Status</name>
+                            <type>10</type>
+                            <snmp_community/>
+                            <snmp_oid/>
+                            <key>zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;]</key>
+                            <delay>2m</delay>
+                            <history>7d</history>
+                            <trends>0</trends>
+                            <status>0</status>
+                            <value_type>1</value_type>
+                            <allowed_hosts/>
+                            <units/>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description>Status of {#VDISKNAME} virtual disk.</description>
+                            <inventory_link>0</inventory_link>
+                            <applications>
+                                <application>
+                                    <name>MSA Virtual Disks</name>
+                                </application>
+                            </applications>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <preprocessing/>
+                            <jmx_endpoint/>
+                            <application_prototypes/>
+                            <master_item_prototype/>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{RGr Template HP MSA 2040:zbx-hpmsa.py[&quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <recovery_mode>0</recovery_mode>
+                            <recovery_expression/>
+                            <name>Virtual Disk {#VDISKNAME} Status is not OK</name>
+                            <correlation_mode>0</correlation_mode>
+                            <correlation_tag/>
+                            <url>http://mon.shuvoe.rg-rus.ru/tr_status.php?hostid={HOST.ID}</url>
+                            <status>0</status>
+                            <priority>2</priority>
+                            <description>Virtual Disk {#VDISKNAME} in {ITEM.LASTVALUE} status.</description>
+                            <type>0</type>
+                            <manual_close>0</manual_close>
+                            <dependencies/>
+                            <tags>
+                                <tag>
+                                    <tag>vdisk</tag>
+                                    <value>failed</value>
+                                </tag>
+                            </tags>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                    <jmx_endpoint/>
+                </discovery_rule>
+            </discovery_rules>
+            <httptests/>
+            <macros/>
+            <templates/>
+            <screens/>
+        </template>
+    </templates>
+</zabbix_export>
