@@ -15,7 +15,7 @@ using [dependent items](https://www.zabbix.com/documentation/3.4/manual/config/i
 zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.
 Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry) and doesn't depends of any external library.
 
-**Latest stable version:** 0.2.5.2
+**Latest stable version:** 0.2.5.3
 
 **Feautres**
 
