@@ -3,8 +3,8 @@ Zabbix module for monitor HPE MSA storages via XML API.
 Zabbix Share page: https://share.zabbix.com/component/mtree/storage-devices/hp/hp-msa-2040-xml-api  
 Also you can contact me with vk.com and Telegram: https://vk.com/asand3r, @asand3r
 
-zbx-hpmsa provides possibility to make LLD of physical and virtual disks on HP MSA storages via it's XML API. Also it can gets status of discovered component.  
-Program wrote with Python 3.6.3, but works with Python 3.4 from CentOS (I didn't check it with earlier versions, sorry).  
+zbx-hpmsa provides possibility to make Low Level Discovery of HPE MSA storage components via it's XML API. Also it can get health status of discovered component.  
+Program wrote with Python 3.6.3, but works with Python 3.4.4 from CentOS (I didn't check it with earlier versions, sorry).  
 
 **Latest stable version:** 0.3
 
@@ -38,6 +38,8 @@ Enables discovery mode.
 Sets component to request.  
 **-g|--get**  
 Sets component item to request.
+**-v|--version**  
+Prints script version and exit.  
 
 ## Usage
 - LLD of enclosures, controllers, virtual disks and physical disks:
