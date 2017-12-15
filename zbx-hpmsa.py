@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from lxml import etree
-from os import path, makedirs, name
+from os import path, makedirs, name, access, getenv, chmod
 from datetime import datetime, timedelta
 from hashlib import md5
 from argparse import ArgumentParser
@@ -26,23 +26,22 @@ def get_skey(storage, login, password, use_cache=True):
     Session key as <str> or error code as <str>
     """
 
-    # Helps with debug info
-    cur_fname = get_skey.__name__
-
     # Determine the path to store cache skey file
     if name == 'posix':
-        tmp = '/tmp/zbx-hpmsa/'
+        tmp_dir = '/tmp/zbx-hpmsa/'
         # Create temp dir if it's not exists
-        if not path.exists(tmp):
-            try:
-                makedirs(tmp)
-            except FileNotFoundError as e:
-                raise SystemExit("ERROR: Cannot create temp directory: {tmp}. {exc}".format(tmp=tmp,exc=e))
+        if not path.exists(tmp_dir):
+            makedirs(tmp_dir)
+            # Making temp dir writable for zabbix user and group
+            chmod(tmp_dir, 0o770)
+        elif not access(tmp_dir, 2):  # 2 - os.W_OK:
+            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir, user=getenv('USER')))
     else:
-        tmp = ''
+        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        tmp_dir = ''
 
     # Cache file name
-    cache_file = '{temp_dir}zbx-hpmsa_{str}.skey'.format(temp_dir=tmp, str=storage)
+    cache_file = tmp_dir + 'zbx-hpmsa_{str}.skey'.format(str=storage)
 
     # Trying to use cached session key
     if use_cache is True and path.exists(cache_file):
@@ -50,8 +49,10 @@ def get_skey(storage, login, password, use_cache=True):
         cache_file_mtime = datetime.utcfromtimestamp(path.getmtime(cache_file))
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
-                # try-except !!! os.access(file, os.R_OK) R_OK = 4
-                return skey_file.read()
+                if access(cache_file, 4):  # 4 - os.R_OK
+                    return skey_file.read()
+                else:
+                    raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
         else:
             return get_skey(storage, login, password, use_cache=False)
     else:
@@ -78,7 +79,7 @@ def get_skey(storage, login, password, use_cache=True):
             elif return_code == '2':
                 return return_code
         except ConnectionError:
-            raise SystemExit('ERROR: ({f}) Could not connect to {url}'.format(f=cur_fname, url=login_url))
+            raise SystemExit("ERROR: Cannot connect to '{url}'".format(url=login_url))
 
 
 def query_xmlapi(url, sessionkey):
