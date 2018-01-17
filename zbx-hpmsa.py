@@ -10,6 +10,7 @@ from socket import gethostbyname
 from requests import get as req_get
 from requests.exceptions import ConnectionError
 
+req_get.packages.urllib3.disable_warnings()
 
 def get_skey(storage, login, password, use_cache=True):
     """
