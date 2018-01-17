@@ -38,7 +38,7 @@
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;]</key>
+                    <key>zbx-hpmsa.py[ &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;]</key>
                     <delay>3h</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -154,7 +154,7 @@
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;]</key>
+                            <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;]</key>
                             <delay>1m</delay>
                             <history>7d</history>
                             <trends>0</trends>
@@ -194,7 +194,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;controllers&quot;, &quot;-g&quot;, &quot;{#CTRLID}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Controller {#CTRLID} health status is not OK</name>
@@ -272,7 +272,7 @@
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;]</key>
+                    <key>zbx-hpmsa.py[ &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;]</key>
                     <delay>3h</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -304,7 +304,7 @@
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;--https&quot;,  &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;]</key>
+                            <key>zbx-hpmsa.py[  &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;]</key>
                             <delay>5m</delay>
                             <history>7d</history>
                             <trends>0</trends>
@@ -344,7 +344,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[&quot;--https&quot;,  &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[  &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;disks&quot;, &quot;-g&quot;, &quot;{#DISKLOCATION}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Physical Disk in slot {#DISKLOCATION} is not OK</name>
@@ -374,7 +374,7 @@
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;]</key>
+                    <key>zbx-hpmsa.py[ &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;]</key>
                     <delay>3h</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -406,7 +406,7 @@
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;]</key>
+                            <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;]</key>
                             <delay>1m</delay>
                             <history>7d</history>
                             <trends>0</trends>
@@ -446,7 +446,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;enclosures&quot;, &quot;-g&quot;, &quot;{#ENCLOSUREID}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Enclosure {#ENCLOSUREID} health status is not OK</name>
@@ -476,7 +476,7 @@
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
-                    <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;]</key>
+                    <key>zbx-hpmsa.py[ &quot;-d&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;]</key>
                     <delay>3h</delay>
                     <status>0</status>
                     <allowed_hosts/>
@@ -508,7 +508,7 @@
                             <type>10</type>
                             <snmp_community/>
                             <snmp_oid/>
-                            <key>zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;]</key>
+                            <key>zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;]</key>
                             <delay>2m</delay>
                             <history>7d</history>
                             <trends>0</trends>
@@ -548,7 +548,7 @@
                     </item_prototypes>
                     <trigger_prototypes>
                         <trigger_prototype>
-                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[&quot;--https&quot;, &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;].count(#5,OK,like)}&lt;3</expression>
+                            <expression>{Template HP MSA 2040:zbx-hpmsa.py[ &quot;-m&quot;, &quot;{HOST.CONN}&quot;, &quot;-c&quot;, &quot;vdisks&quot;, &quot;-g&quot;, &quot;{#VDISKNAME}&quot;].count(#5,OK,like)}&lt;3</expression>
                             <recovery_mode>0</recovery_mode>
                             <recovery_expression/>
                             <name>Virtual Disk {#VDISKNAME} Status is not OK</name>
