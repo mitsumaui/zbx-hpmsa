@@ -229,10 +229,10 @@ def make_discovery(storage, sessionkey, component):
                 ctrl_id = ctrl.find("./PROPERTY[@name='controller-id']").text
                 ctrl_sn = ctrl.find("./PROPERTY[@name='serial-number']").text
                 ctrl_ip = ctrl.find("./PROPERTY[@name='ip-address']").text
-                all_ports = [port.find("./PROPERTY[@name='port']").text
-                             for port in ctrl.findall("./OBJECT[@name='ports']")]
-                for port in all_ports:
-                    raw_json_part += '{{"{{#PORTNAME}}":"{}"}},'.format(port)
+                #all_ports = [port.find("./PROPERTY[@name='port']").text
+                #             for port in ctrl.findall("./OBJECT[@name='ports']")]
+                #for port in all_ports:
+                #    raw_json_part += '{{"{{#PORTNAME}}":"{}"}},'.format(port)
                 # Forming final dict
                 ctrl_dict = {"{#CTRLID}": "{id}".format(id=ctrl_id),
                              "{#CTRLSN}": "{sn}".format(sn=ctrl_sn),
