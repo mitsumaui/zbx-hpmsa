@@ -387,7 +387,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
-    parser.add_argument('--https', type=str, choices=['direct', 'verify'], help='Use https instead http',
+    parser.add_argument('--https', type=str, default='direct', choices=['direct', 'verify'], help='Use https instead http',
                         metavar='[direct|verify]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
