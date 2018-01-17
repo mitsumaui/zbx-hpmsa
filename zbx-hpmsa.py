@@ -167,7 +167,7 @@ def get_health(storage, sessionkey, component, item):
     # disks and vdisks
     if component in ('vdisks', 'disks'):
         try:
-            health = resp_xml.find("./OBJECT[@name='{nd}']/PROPERTY[@name='health']".format(nd=md[component])).text
+            health = resp_xml.find("./OBJECT[@name='{nd}']/PROPERTY[@name='health-numeric']".format(nd=md[component])).text
         except AttributeError:
             raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
     # controllers and enclosures
@@ -177,7 +177,7 @@ def get_health(storage, sessionkey, component, item):
         for ctrl in resp_xml.findall("./OBJECT[@name='{comp}']".format(comp=component)):
             ctrl_id = ctrl.find("./PROPERTY[@name='{nd}']".format(nd=md[component])).text
             # Add 'health' to dict
-            health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health']").text
+            health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health-numeric']").text
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
@@ -289,7 +289,7 @@ def get_all(storage, sessionkey, component):
         for PROP in xml.findall("./OBJECT[@name='drive']"):
             # Getting data from XML
             disk_location = PROP.find("./PROPERTY[@name='location']").text
-            disk_health = PROP.find("./PROPERTY[@name='health']").text
+            disk_health = PROP.find("./PROPERTY[@name='health-numeric']").text
             disk_temp = PROP.find("./PROPERTY[@name='temperature-numeric']").text
             disk_work_hours = PROP.find("./PROPERTY[@name='power-on-hours']").text
             # Making dict with one disk data
@@ -304,7 +304,7 @@ def get_all(storage, sessionkey, component):
         for PROP in xml.findall("./OBJECT[@name='virtual-disk']"):
             # Getting data from XML
             vdisk_name = PROP.find("./PROPERTY[@name='name']").text
-            vdisk_health = PROP.find("./PROPERTY[@name='health']").text
+            vdisk_health = PROP.find("./PROPERTY[@name='health-numeric']").text
 
             # Making dict with one vdisk data
             vdisk_info = {
@@ -316,13 +316,13 @@ def get_all(storage, sessionkey, component):
         for PROP in xml.findall("./OBJECT[@name='controllers']"):
             # Getting data from XML
             ctrl_id = PROP.find("./PROPERTY[@name='controller-id']").text
-            ctrl_health = PROP.find("./PROPERTY[@name='health']").text
-            cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health']").text
+            ctrl_health = PROP.find("./PROPERTY[@name='health-numeric']").text
+            cf_health = PROP.find("./OBJECT[@basetype='compact-flash']/PROPERTY[@name='health-numeric']").text
             # Getting info for all FC ports
             ports_info = {}
             for FC_PORT in PROP.findall("./OBJECT[@name='ports']"):
                 port_name = FC_PORT.find("./PROPERTY[@name='port']").text
-                port_health = FC_PORT.find("./PROPERTY[@name='health']").text
+                port_health = FC_PORT.find("./PROPERTY[@name='health-numeric']").text
                 port_status = FC_PORT.find("./PROPERTY[@name='status']").text
                 sfp_status = FC_PORT.find("./OBJECT[@name='port-details']/PROPERTY[@name='sfp-status']").text
                 # Puts all info into dict
@@ -341,14 +341,14 @@ def get_all(storage, sessionkey, component):
     elif component == 'enclosures':
         for PROP in xml.findall("./OBJECT[@name='enclosures']"):
             encl_id = PROP.find("./PROPERTY[@name='enclosure-id']").text
-            encl_health = PROP.find("./PROPERTY[@name='health']").text
+            encl_health = PROP.find("./PROPERTY[@name='health-numeric']").text
             encl_status = PROP.find("./PROPERTY[@name='status']").text
             # Power supply info
             ps_info = {}
             for PS in PROP.findall("./OBJECT[@name='power-supplies']"):
                 ps_id = PS.find("./PROPERTY[@name='durable-id']").text
                 ps_name = PS.find("./PROPERTY[@name='name']").text
-                ps_health = PS.find("./PROPERTY[@name='health']").text
+                ps_health = PS.find("./PROPERTY[@name='health-numeric']").text
                 ps_status = PS.find("./PROPERTY[@name='status']").text
                 ps_temp = PS.find("./PROPERTY[@name='dctemp']").text
                 # Puts all info into dict
