@@ -242,10 +242,10 @@ def make_discovery(storage, sessionkey, component):
             for encl in xml.findall(".OBJECT[@name='enclosures']"):
                 encl_id = encl.find("./PROPERTY[@name='enclosure-id']").text
                 encl_sn = encl.find("./PROPERTY[@name='midplane-serial-number']").text
-                all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
-                          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
-                for ps in all_ps:
-                    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
+                #all_ps = [PS.find("./PROPERTY[@name='durable-id']").text
+                #          for PS in encl.findall("./OBJECT[@name='power-supplies']")]
+                #for ps in all_ps:
+                #    raw_json_part += '{{"{{#POWERSUPPLY}}":"{}"}},'.format(ps)
                 # Forming final dict
                 encl_dict = {"{#ENCLOSUREID}": "{id}".format(id=encl_id),
                              "{#ENCLOSURESN}": "{sn}".format(sn=encl_sn)}
