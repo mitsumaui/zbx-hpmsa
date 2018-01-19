@@ -47,12 +47,13 @@ def get_skey(storage, login, password, use_cache=True):
     if not os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
+
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
-                if os.access(cache_file, 4):  # 4 - os.R_OK
-                    return skey_file.read()
-                else:
-                    raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
+            if os.access(cache_file, 4):  # 4 - os.R_OK
+                return skey_file.read()
+            else:
+                raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
         else:
             return get_skey(storage, login, password, use_cache=False)
     else:
