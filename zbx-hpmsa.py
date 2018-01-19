@@ -26,20 +26,16 @@ def get_skey(storage, login, password, use_cache=True):
     Session key as <str> or error code as <str>
     """
 
-    # Global variable points to use HTTPS or not
-    global use_https
-
     # Determine the path to store cache skey file
-    if os.name == 'posix' and not use_https:
-        tmp_dir = '/tmp/zbx-hpmsa-dev/'
-        # Create temp dir if it's not exists
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-            # Making temp dir writable for zabbix user and group
-            os.chmod(tmp_dir, 0o770)
-        elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
-            raise SystemExit("ERROR: '{tmp}' not writable for user '{user}'.".format(tmp=tmp_dir,
-                                                                                     user=os.getenv('USER')))
+    tmp_dir = '/tmp/zbx-hpmsa-dev/'
+    # Create temp dir if it's not exists
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+        # Making temp dir writable for zabbix user and group
+        os.chmod(tmp_dir, 0o770)
+    elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
+        raise SystemExit("ERROR: '{tmp}' not writable for user ['{user}'].".format(tmp=tmp_dir,
+                                                                                    user=os.getenv('USER')))
     else:
         # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
         tmp_dir = ''
@@ -48,10 +44,10 @@ def get_skey(storage, login, password, use_cache=True):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
 
     # Trying to use cached session key
-    if not use_https and use_cache and os.path.exists(cache_file):
+    if not os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
-        if cache_alive < cache_file_mtime:
+         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as skey_file:
                 if os.access(cache_file, 4):  # 4 - os.R_OK
                     return skey_file.read()
@@ -83,7 +79,7 @@ def get_skey(storage, login, password, use_cache=True):
 
 def query_xmlapi(url, sessionkey):
     """
-    Making HTTP request to HP MSA XML API and returns it's response as 3-element tuple.
+    Making HTTPS request to HP MSA XML API and returns it's response as 3-element tuple.
     :param url:
     URL to make GET request in <str>.
     :param sessionkey:
@@ -95,25 +91,11 @@ def query_xmlapi(url, sessionkey):
     # Helps with debug info
     cur_fname = query_xmlapi.__name__
 
-    # Global variable points to use HTTPS or not
-    global use_https
-    global verify_ssl
-
-    # Set file where we can find root CA for our storages
-    ca_file = '/etc/ssl/certs/ca-bundle.crt'
-
     # Makes GET request to URL
     try:
-        if not use_https:  # http
-            url = 'http://' + url
-            response = requests.get(url, headers={'sessionKey': sessionkey})
-        else:  # https
-            url = 'https://' + url
-            if verify_ssl:
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=ca_file)
-            else:
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False)
+        url = 'https://' + url
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        response = requests.get(url, headers={'sessionKey': sessionkey}, verify=False)
     except requests.exceptions.SSLError:
         raise SystemExit('ERROR: Cannot verify storage SSL Certificate.')
     except requests.exceptions.ConnectionError:
@@ -398,7 +380,7 @@ if __name__ == '__main__':
 
     # Set msa_connect - IP or DNS name and determine to use https or not
     use_https = args.https in ['direct', 'verify']
-    verify_ssl = args.https == 'verify'
+    verify_ssl = args.https == 'direct'
     msa_connect = args.msa if use_https else gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
