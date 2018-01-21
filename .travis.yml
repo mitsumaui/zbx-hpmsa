@@ -5,7 +5,6 @@ python:
 
 install:
   - pip install requests
-  - pip install json
   - pip install urllib3
 
 script: 
