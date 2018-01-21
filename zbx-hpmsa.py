@@ -380,7 +380,7 @@ if __name__ == '__main__':
     # Set msa_connect - IP or DNS name and determine to use https or not
     use_https = args.https in ['direct', 'verify']
     verify_ssl = args.https == 'direct'
-    msa_connect = args.msa if use_https else gethostbyname(args.msa)
+    msa_connect = gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
