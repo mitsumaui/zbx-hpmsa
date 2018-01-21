@@ -6,6 +6,6 @@ python:
 install:
   - pip install requests
   - pip install urllib3
-
+  - pip install lxml
 script: 
   - python zbx-hpmsa.py
