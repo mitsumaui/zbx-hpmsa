@@ -44,7 +44,7 @@ def get_skey(storage, login, password, use_cache=True):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
 
     # Trying to use cached session key
-    if not os.path.exists(cache_file):
+    if os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
 
@@ -370,8 +370,6 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
-    parser.add_argument('--https', type=str, default='direct', choices=['direct', 'verify'], help='Use https instead http',
-                        metavar='[direct|verify]')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
 
