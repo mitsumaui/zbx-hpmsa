@@ -173,8 +173,9 @@ def get_health(storage, sessionkey, component, item):
         if resp_return_code != '0':
             raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
         else: 
-            with open(cache_file, 'w') as data_file:
-                data_file.write("{xml}".format(xml=etree.tostring(resp_xml, pretty_print=True)))
+            etree.write(cache_file, pretty_print=True)
+            #with open(cache_file, 'w') as data_file:
+            #    data_file.write("{xml}".format(xml=etree.tostring(resp_xml, pretty_print=True)))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
