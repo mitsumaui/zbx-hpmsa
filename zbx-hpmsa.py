@@ -161,9 +161,9 @@ def get_health(storage, sessionkey, component, item):
 
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as data_file:
-                if os.access(data_file, 4):  # 4 - os.R_OK
+                if os.access(cache_file, 4):  # 4 - os.R_OK
                     resp_return_code = 0
-                    resp_xml = data_file.read()
+                    resp_xml = etree.fromstring(data_file.read())
                 else:
                     raise SystemExit("ERROR: Cannot read {comp} file '{c_skey}'".format(comp=component, c_skey=cache_file))
 
@@ -174,7 +174,7 @@ def get_health(storage, sessionkey, component, item):
             raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
         else: 
             with open(cache_file, 'w') as data_file:
-                data_file.write("{xml}".format(xml=resp_xml))
+                data_file.write("{xml}".format(xml=etree.tostring(resp_xml, pretty_print=True))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
