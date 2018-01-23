@@ -69,9 +69,8 @@ def get_skey(storage, login, password, use_cache=True):
 
         # 1 - success, write cache in file and return session key
         if return_code == '1':
-            if not use_https:
-                with open(cache_file, 'w') as skey_file:
-                    skey_file.write("{skey}".format(skey=response_message))
+            with open(cache_file, 'w') as skey_file:
+                skey_file.write("{skey}".format(skey=response_message))
             return response_message
         # 2 - Authentication Unsuccessful, return 2 as <str>
         elif return_code == '2':
@@ -132,17 +131,48 @@ def get_health(storage, sessionkey, component, item):
     """
 
     # Forming URL
-    if component in ('vdisks', 'disks'):
-        get_url = '{strg}/api/show/{comp}/{item}'.format(strg=storage, comp=component, item=item)
-    elif component in ('controllers', 'enclosures'):
+    if component in ('controllers', 'enclosures', 'vdisks', 'disks'):
         get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
 
-    # Making request to API
-    resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
-    if resp_return_code != '0':
-        raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
+    # Determine the path to store cache skey file
+    tmp_dir = '/tmp/zbx-hpmsa-dev/'
+    # Create temp dir if it's not exists
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+        # Making temp dir writable for zabbix user and group
+        os.chmod(tmp_dir, 0o770)
+    elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
+        raise SystemExit("ERROR: '{tmp}' not writable for user ['{user}'].".format(tmp=tmp_dir,
+                                                                                    user=os.getenv('USER')))
+    else:
+        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
+        tmp_dir = ''
+
+    # Cache file name
+    cache_file = tmp_dir + 'zbx-hpmsa_{strg}.{comp}'.format(strg=storage, comp=component)
+
+    # Trying to use cached session key
+    if os.path.exists(cache_file):
+        cache_alive = datetime.utcnow() - timedelta(minutes=5)
+        cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
+
+        if cache_alive < cache_file_mtime:
+            with open(cache_file, 'r') as data_file:
+                if os.access(data_file, 4):  # 4 - os.R_OK
+                    resp_return_code = 0
+                    resp_xml = data_file.read()
+                else:
+                    raise SystemExit("ERROR: Cannot read {comp} file '{c_skey}'".format(comp=component, c_skey=cache_file))
+        else:
+            # Making request to API
+            resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
+            if resp_return_code != '0':
+                raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
+            else: 
+                with open(cache_file, 'w') as data_file:
+                    data_file.write("{xml}".format(xml=response_xml))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
