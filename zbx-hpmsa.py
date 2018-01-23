@@ -225,7 +225,7 @@ def get_health(storage, sessionkey, component, item):
             health = health_dict[item]
         else:
             raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
-    else:
+    except (AttributeError):
         raise SystemExit("ERROR: Wrong component '{comp}'".format(comp=component))
     return health
 
