@@ -154,6 +154,7 @@ def get_health(storage, sessionkey, component, item):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.{comp}'.format(strg=storage, comp=component)
 
     # Trying to use cached session key
+    resp_return_code = 255
     if os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=5)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
