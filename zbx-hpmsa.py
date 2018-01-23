@@ -154,7 +154,7 @@ def get_health(storage, sessionkey, component, item):
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
     log.info("URL: {url}".format(url=get_url))
 
-    # Determine the path to store cache skey file
+    # Determine the path to store cache file
     tmp_dir = '/tmp/zbx-hpmsa-dev/'
     # Create temp dir if it's not exists
     if not os.path.exists(tmp_dir):
@@ -183,7 +183,7 @@ def get_health(storage, sessionkey, component, item):
         log.info("Now: {now} / File: {mtime}".format(now=cache_alive,mtime=cache_file_mtime))
 
         if cache_alive < cache_file_mtime:
-            log.info("Cache file less than 15 minutes")
+            log.info("Cache file less than 5 minutes")
             with open(cache_file, 'r') as data_file:
                 log.info("opening cache for read")
                 if os.access(cache_file, 4):  # 4 - os.R_OK
@@ -209,27 +209,23 @@ def get_health(storage, sessionkey, component, item):
             #    data_file.write("{xml}".format(xml=etree.tostring(resp_xml, pretty_print=True)))
 
     # Matching dict
-    md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
+    comp_dict = {'controllers': 'controllers', 'enclosures': 'enclosures', 'vdisks': 'virtual-disk', 'disks': 'drive'}
+    item_dict = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'name', 'disks': 'location'}
+    # md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
     # Returns health statuses
     # disks and vdisks
-    if component in ('vdisks', 'disks'):
-        try:
-            health = resp_xml.find("./OBJECT[@name='{nd}']/PROPERTY[@name='health-numeric']".format(nd=md[component])).text
-        except AttributeError:
-            raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
-    # controllers and enclosures
-    elif component in ('controllers', 'enclosures'):
-        # we'll make dict {ctrl_id: health} because of we cannot call API for exact controller status
+    try:
         health_dict = {}
-        for ctrl in resp_xml.findall("./OBJECT[@name='{comp}']".format(comp=component)):
-            ctrl_id = ctrl.find("./PROPERTY[@name='{nd}']".format(nd=md[component])).text
+        for all_comp in resp_xml.findall("./OBJECT[@name='{comp}']".format(comp=comp_dict[component])):
+            comp_id = all_comp.find("./PROPERTY[@name='{nd}']".format(nd=item_dict[component])).text
             # Add 'health' to dict
-            health_dict[ctrl_id] = ctrl.find("./PROPERTY[@name='health-numeric']").text
+            health_dict[comp_id] = all_comp.find("./PROPERTY[@name='health-numeric']").text
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
-        else:
-            raise SystemExit("ERROR: No such id: '{item}'.".format(item=item))
+
+        except AttributeError:
+            raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
     else:
         raise SystemExit("ERROR: Wrong component '{comp}'".format(comp=component))
     return health
