@@ -4,6 +4,7 @@ import os
 import requests
 import json
 import urllib3
+import logging as log
 from lxml import etree
 from datetime import datetime, timedelta
 from hashlib import md5
@@ -26,6 +27,7 @@ def get_skey(storage, login, password, use_cache=True):
     Session key as <str> or error code as <str>
     """
 
+    log.info("Starting function:  get_skey")
     # Determine the path to store cache skey file
     tmp_dir = '/tmp/zbx-hpmsa-dev/'
     # Create temp dir if it's not exists
@@ -40,38 +42,53 @@ def get_skey(storage, login, password, use_cache=True):
         # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
         tmp_dir = ''
 
+    log.info("temp dir: {tmp}".format(tmp=tmp_dir))
+
     # Cache file name
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.skey'.format(strg=storage)
+    log.info("cache_file: {cfile}".format(cfile=cache_file))
+
 
     # Trying to use cached session key
     if os.path.exists(cache_file):
+        log.info("Cache file exists")
+        
         cache_alive = datetime.utcnow() - timedelta(minutes=15)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
-
+        log.info("Now: {now} / File: {mtime}".format(now=cache_alive,mtime=cache_file_mtime))
+        
         if cache_alive < cache_file_mtime:
+            log.info("Cache file less than 15 minutes")
             with open(cache_file, 'r') as skey_file:
+                log.info("opening cache for read")
                 if os.access(cache_file, 4):  # 4 - os.R_OK
                     return skey_file.read()
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
     else:
         # Combine login and password to 'login_password' format.
+        log.info("Generating login data")
         login_data = '_'.join([login, password])
         login_hash = md5(login_data.encode()).hexdigest()
 
         # Forming URL and trying to make GET query
         login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+        log.info("URL: {url}".format(url=login_url))
 
         # Processing XML
+        log.info("calling query_xmlapi")
         return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
         # 1 - success, write cache in file and return session key
         if return_code == '1':
+            log.info("login successful")
             with open(cache_file, 'w') as skey_file:
+                log.info("writing key to {file}".format(file=cache_file))
                 skey_file.write("{skey}".format(skey=response_message))
             return response_message
         # 2 - Authentication Unsuccessful, return 2 as <str>
         elif return_code == '2':
+            log.info("Error logging in")
             return return_code
 
 
@@ -127,12 +144,15 @@ def get_health(storage, sessionkey, component, item):
     :return:
     HTTP response text in XML format.
     """
+    
+    log.info("Starting function:  get_health")
 
     # Forming URL
     if component in ('controllers', 'enclosures', 'vdisks', 'disks'):
         get_url = '{strg}/api/show/{comp}'.format(strg=storage, comp=component)
     else:
         raise SystemExit('ERROR: Wrong component "{comp}"'.format(comp=component))
+    log.info("URL: {url}".format(url=get_url))
 
     # Determine the path to store cache skey file
     tmp_dir = '/tmp/zbx-hpmsa-dev/'
@@ -148,18 +168,26 @@ def get_health(storage, sessionkey, component, item):
         # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
         tmp_dir = ''
 
+    log.info("temp dir: {tmp}".format(tmp=tmp_dir))
+    
     # Cache file name
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.{comp}'.format(strg=storage, comp=component)
+    log.info("cache_file: {cfile}".format(cfile=cache_file))
 
     # Trying to use cached session key
     pull_fresh=True
     if os.path.exists(cache_file):
+        log.info("Cache file exists")
         cache_alive = datetime.utcnow() - timedelta(minutes=5)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
-        
+        log.info("Now: {now} / File: {mtime}".format(now=cache_alive,mtime=cache_file_mtime))
+
         if cache_alive < cache_file_mtime:
+            log.info("Cache file less than 15 minutes")
             with open(cache_file, 'r') as data_file:
+                log.info("opening cache for read")
                 if os.access(cache_file, 4):  # 4 - os.R_OK
+                    log.info("Access OK - Reading file")
                     pull_fresh=False
                     resp_return_code = 0
                     resp_xml = etree.fromstring(data_file.read())
@@ -167,12 +195,15 @@ def get_health(storage, sessionkey, component, item):
                     raise SystemExit("ERROR: Cannot read {comp} file '{c_skey}'".format(comp=component, c_skey=cache_file))
 
     if pull_fresh:
+        log.info("Pulling fresh data")
         # Making request to API
         resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
         if resp_return_code != '0':
             raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
         else: 
+            log.info("Valid data returned")
             tree = etree.ElementTree(resp_xml)
+            log.info("saving data to file")
             tree.write(cache_file, pretty_print=True)
             #with open(cache_file, 'w') as data_file:
             #    data_file.write("{xml}".format(xml=etree.tostring(resp_xml, pretty_print=True)))
@@ -403,8 +434,12 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--component', type=str, choices=['disks', 'vdisks', 'controllers', 'enclosures'],
                         help='MSA component for monitor or discover',
                         metavar='[disks|vdisks|controllers|enclosures]')
+    parser.add_argument('--verbose', default=False, help='Log Verbose Output')
     parser.add_argument('-v', '--version', action='version', version=VERSION, help='Print the script version and exit')
     args = parser.parse_args()
+
+    if args.verbose:
+        log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
 
     # Make no possible to use '--discovery' and '--get' options together
     if args.discovery and args.get:
