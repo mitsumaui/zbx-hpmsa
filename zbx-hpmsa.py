@@ -223,8 +223,7 @@ def get_health(storage, sessionkey, component, item):
         # If given item presents in our dict - return status
         if item in health_dict:
             health = health_dict[item]
-
-        except AttributeError:
+        else:
             raise SystemExit("ERROR: No such id: '{item}'".format(item=item))
     else:
         raise SystemExit("ERROR: Wrong component '{comp}'".format(comp=component))
