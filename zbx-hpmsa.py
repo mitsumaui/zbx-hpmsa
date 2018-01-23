@@ -54,8 +54,6 @@ def get_skey(storage, login, password, use_cache=True):
                     return skey_file.read()
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
-        else:
-            return get_skey(storage, login, password, use_cache=False)
     else:
         # Combine login and password to 'login_password' format.
         login_data = '_'.join([login, password])
