@@ -29,7 +29,7 @@ def get_skey(storage, login, password, use_cache=True):
 
     log.info("Starting function:  get_skey")
     # Determine the path to store cache skey file
-    tmp_dir = '/tmp/zbx-hpmsa-dev/'
+    tmp_dir = '/tmp/zbx-hpmsa/'
     # Create temp dir if it's not exists
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
@@ -38,9 +38,6 @@ def get_skey(storage, login, password, use_cache=True):
     elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
         raise SystemExit("ERROR: '{tmp}' not writable for user ['{user}'].".format(tmp=tmp_dir,
                                                                                     user=os.getenv('USER')))
-    else:
-        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
-        tmp_dir = ''
 
     log.info("temp dir: {tmp}".format(tmp=tmp_dir))
 
@@ -155,7 +152,7 @@ def get_health(storage, sessionkey, component, item):
     log.info("URL: {url}".format(url=get_url))
 
     # Determine the path to store cache file
-    tmp_dir = '/tmp/zbx-hpmsa-dev/'
+    tmp_dir = '/tmp/zbx-hpmsa/'
     # Create temp dir if it's not exists
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
@@ -164,9 +161,6 @@ def get_health(storage, sessionkey, component, item):
     elif not os.access(tmp_dir, 2):  # 2 - os.W_OK:
         raise SystemExit("ERROR: '{tmp}' not writable for user ['{user}'].".format(tmp=tmp_dir,
                                                                                     user=os.getenv('USER')))
-    else:
-        # Current dir. Yeap, it's easier than getcwd() or os.path.dirname(os.path.abspath(__file__)).
-        tmp_dir = ''
 
     log.info("temp dir: {tmp}".format(tmp=tmp_dir))
     
