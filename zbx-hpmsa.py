@@ -408,8 +408,8 @@ if __name__ == '__main__':
         raise SystemExit("Syntax error: Cannot use '-d|--discovery' and '-g|--get' options together.")
 
     # Set msa_connect - IP or DNS name and determine to use https or not
-    use_https = args.https in ['direct', 'verify']
-    verify_ssl = args.https == 'direct'
+    use_https = 'direct'
+    verify_ssl = 'direct'
     msa_connect = gethostbyname(args.msa)
 
     # Make no possible to use '--discovery' and '--get' options together
