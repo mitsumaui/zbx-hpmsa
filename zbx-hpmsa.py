@@ -165,14 +165,15 @@ def get_health(storage, sessionkey, component, item):
                     resp_xml = data_file.read()
                 else:
                     raise SystemExit("ERROR: Cannot read {comp} file '{c_skey}'".format(comp=component, c_skey=cache_file))
-        else:
-            # Making request to API
-            resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
-            if resp_return_code != '0':
-                raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
-            else: 
-                with open(cache_file, 'w') as data_file:
-                    data_file.write("{xml}".format(xml=response_xml))
+
+    if resp_return_code != '0':
+        # Making request to API
+        resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
+        if resp_return_code != '0':
+            raise SystemExit('ERROR: {rc} : {rd}'.format(rc=resp_return_code, rd=resp_description))
+        else: 
+            with open(cache_file, 'w') as data_file:
+                data_file.write("{xml}".format(xml=response_xml))
 
     # Matching dict
     md = {'controllers': 'controller-id', 'enclosures': 'enclosure-id', 'vdisks': 'virtual-disk', 'disks': 'drive'}
