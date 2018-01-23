@@ -152,20 +152,21 @@ def get_health(storage, sessionkey, component, item):
     cache_file = tmp_dir + 'zbx-hpmsa_{strg}.{comp}'.format(strg=storage, comp=component)
 
     # Trying to use cached session key
-    resp_return_code = 255
+    pull_fresh=True
     if os.path.exists(cache_file):
         cache_alive = datetime.utcnow() - timedelta(minutes=5)
         cache_file_mtime = datetime.utcfromtimestamp(os.path.getmtime(cache_file))
-
+        
         if cache_alive < cache_file_mtime:
             with open(cache_file, 'r') as data_file:
                 if os.access(cache_file, 4):  # 4 - os.R_OK
+                    pull_fresh=False
                     resp_return_code = 0
                     resp_xml = etree.fromstring(data_file.read())
                 else:
                     raise SystemExit("ERROR: Cannot read {comp} file '{c_skey}'".format(comp=component, c_skey=cache_file))
 
-    if resp_return_code != '0':
+    if pull_fresh:
         # Making request to API
         resp_return_code, resp_description, resp_xml = query_xmlapi(get_url, sessionkey)
         if resp_return_code != '0':
