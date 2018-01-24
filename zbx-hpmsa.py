@@ -62,31 +62,31 @@ def get_skey(storage, login, password, use_cache=True):
                     return skey_file.read()
                 else:
                     raise SystemExit("ERROR: Cannot read skey file '{c_skey}'".format(c_skey=cache_file))
-    else:
-        # Combine login and password to 'login_password' format.
-        log.info("Generating login data")
-        login_data = '_'.join([login, password])
-        login_hash = md5(login_data.encode()).hexdigest()
+        
+    # Combine login and password to 'login_password' format.
+    log.info("Generating login data")
+    login_data = '_'.join([login, password])
+    login_hash = md5(login_data.encode()).hexdigest()
 
-        # Forming URL and trying to make GET query
-        login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
-        log.info("URL: {url}".format(url=login_url))
+    # Forming URL and trying to make GET query
+    login_url = '{strg}/api/login/{hash}'.format(strg=storage, hash=login_hash)
+    log.info("URL: {url}".format(url=login_url))
 
-        # Processing XML
-        log.info("calling query_xmlapi")
-        return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
+    # Processing XML
+    log.info("calling query_xmlapi")
+    return_code, response_message, xml_data = query_xmlapi(url=login_url, sessionkey=None)
 
-        # 1 - success, write cache in file and return session key
-        if return_code == '1':
-            log.info("login successful")
-            with open(cache_file, 'w') as skey_file:
-                log.info("writing key to {file}".format(file=cache_file))
-                skey_file.write("{skey}".format(skey=response_message))
-            return response_message
-        # 2 - Authentication Unsuccessful, return 2 as <str>
-        elif return_code == '2':
-            log.info("Error logging in")
-            return return_code
+    # 1 - success, write cache in file and return session key
+    if return_code == '1':
+        log.info("login successful")
+        with open(cache_file, 'w') as skey_file:
+            log.info("writing key to {file}".format(file=cache_file))
+            skey_file.write("{skey}".format(skey=response_message))
+        return response_message
+    # 2 - Authentication Unsuccessful, return 2 as <str>
+    elif return_code == '2':
+        log.info("Error logging in")
+        return return_code
 
 
 def query_xmlapi(url, sessionkey):
